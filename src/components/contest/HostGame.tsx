@@ -289,10 +289,10 @@ export default function HostGame({
                 </div>
               </div>
 
-              {/* the question — fills the stage */}
+              {/* the question — maximized for distance readability */}
               <h2
-                className="type-qa mt-6 w-full max-w-6xl leading-[1.1] text-paper md:mt-10"
-                style={{ fontSize: "clamp(2.4rem, 6vw, 4.75rem)" }}
+                className="type-qa mt-4 w-full max-w-[92rem] leading-[1.05] text-paper md:mt-6"
+                style={{ fontSize: "clamp(3rem, min(8vw, 12vh), 8rem)" }}
               >
                 {question.text}
               </h2>

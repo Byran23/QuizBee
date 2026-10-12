@@ -275,7 +275,7 @@ export default function QuizScreen({
                   <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""}</span>
                   {isOpen && <span className="ml-2 rounded bg-white/5 px-1.5 py-0.5 text-violet">OPEN</span>}
                 </p>
-                <h2 className="type-qa mt-3 leading-snug text-paper" style={{ fontSize: "clamp(1.65rem, 3.1vw, 2.75rem)" }}>
+                <h2 className="type-qa mt-3 leading-[1.15] text-paper" style={{ fontSize: "clamp(1.9rem, min(4.2vw, 6vh), 3.5rem)" }}>
                   {question.text}
                 </h2>
               </div>

@@ -44,6 +44,26 @@ function tone(
   osc.stop(c.currentTime + start + dur + 0.05);
 }
 
+/** Synthesized bell via additive partials + a brief strike transient. */
+function bell(freq: number, start: number, dur = 1.6, gain = 0.13) {
+  // inharmonic partials (ratio, amplitude) — the classic bell recipe
+  const partials: [number, number][] = [
+    [0.5, 0.35],  // hum
+    [1.0, 1.0],   // prime
+    [1.19, 0.35], // tierce-ish
+    [2.0, 0.32],  // octave
+    [2.74, 0.18], // minor fifth of octave
+    [3.76, 0.09],
+    [5.4, 0.045],
+  ];
+  for (const [ratio, amp] of partials) {
+    const d = Math.max(0.3, dur * (1.12 - ratio * 0.09));
+    tone(freq * ratio, start, d, "sine", gain * amp);
+  }
+  // strike transient — a tiny metallic click at the start
+  tone(freq * 4.1, start, 0.055, "square", gain * 0.18);
+}
+
 export const sfx = {
   tick() {
     tone(880, 0, 0.07, "square", 0.05);
@@ -61,14 +81,10 @@ export const sfx = {
     tone(147, 0.12, 0.3, "sawtooth", 0.07, 98);
   },
   timeUp() {
-    // game-show buzzer: harsh low double-blat + dying siren fall
-    tone(165, 0, 0.42, "sawtooth", 0.13);
-    tone(110, 0, 0.42, "square", 0.1);
-    tone(164, 0.012, 0.42, "sawtooth", 0.1); // detune for the "grind"
-    tone(165, 0.52, 0.6, "sawtooth", 0.13);
-    tone(110, 0.52, 0.6, "square", 0.1);
-    tone(164, 0.532, 0.6, "sawtooth", 0.1);
-    tone(330, 1.18, 0.75, "sawtooth", 0.07, 98); // siren wind-down
+    // time-up bell: three clear rings (additive partials = real bell timbre)
+    bell(1318.5, 0); // E6
+    bell(1318.5, 0.55);
+    bell(1046.5, 1.1, 2.2, 0.15); // C6 — slower final toll
   },
   advance() {
     tone(392, 0, 0.06, "sine", 0.07, 523);
