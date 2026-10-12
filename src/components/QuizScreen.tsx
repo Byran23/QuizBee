@@ -200,7 +200,7 @@ export default function QuizScreen({
   return (
     <div className="relative flex min-h-screen flex-col">
       {/* top bar */}
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 pt-6">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 pt-6">
         <span className="pip pip-glass" style={{ color: round.def.color, borderColor: `${round.def.color}40`, background: `${round.def.color}0f` }}>
           <span className="dot animate-pulse" />
           R{roundIndex + 1}/{totalRounds} · {round.def.label.toUpperCase()}
@@ -244,7 +244,7 @@ export default function QuizScreen({
       </header>
 
       {/* segmented progress */}
-      <div className="mx-auto mt-5 flex w-full max-w-5xl gap-1.5 px-6">
+      <div className="mx-auto mt-5 flex w-full max-w-6xl gap-1.5 px-6">
         {round.questions.map((_, i) => (
           <div
             key={i}
@@ -258,7 +258,7 @@ export default function QuizScreen({
       </div>
 
       {/* main card */}
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-8">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={question.id}
@@ -268,29 +268,29 @@ export default function QuizScreen({
             transition={{ duration: 0.55, ease }}
           >
             {/* question row */}
-            <div className="flex items-start justify-between gap-8">
-              <div className="min-w-0">
-                <p className="font-mono text-[11px] tracking-[0.35em] text-fog">
+            <div className="flex items-start justify-between gap-6 md:gap-10">
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-sm tracking-[0.3em] text-fog md:text-[15px]">
                   QUESTION {String(index + 1).padStart(2, "0")} / {String(round.questions.length).padStart(2, "0")}
                   <span className="mx-2 text-white/20">|</span>
                   <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""}</span>
-                  {isOpen && <span className="ml-2 rounded bg-white/5 px-1.5 py-0.5 text-violet">OPEN</span>}
+                  {isOpen && <span className="ml-2 rounded bg-white/5 px-2 py-1 text-[12px] text-violet">OPEN</span>}
                 </p>
                 <AutoFitText
                   key={`q-text-${index}`}
                   text={question.text}
-                  min={18}
-                  max={64}
-                  lineHeight={1.14}
-                  className="mt-3 flex w-full items-center"
-                  style={{ height: "clamp(4.5rem, 15vh, 9rem)" }}
+                  min={26}
+                  max={120}
+                  lineHeight={1.1}
+                  className="mt-4 flex w-full items-center"
+                  style={{ height: "clamp(7rem, 30vh, 17rem)" }}
                   textClassName="type-qa text-paper"
                 />
               </div>
 
               {/* timer ring */}
               <div className={cn("relative shrink-0", danger && "ring-pulse")}>
-                <svg width="72" height="72" viewBox="0 0 72 72" className="-rotate-90">
+                <svg width="104" height="104" viewBox="0 0 72 72" className="-rotate-90 md:h-[120px] md:w-[120px]">
                   <circle cx="36" cy="36" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
                   <circle
                     cx="36" cy="36" r={R} fill="none"
@@ -303,8 +303,8 @@ export default function QuizScreen({
                   />
                 </svg>
                 <div className="absolute inset-0 grid place-items-center">
-                  <span className="font-mono text-lg font-bold tabular-nums" style={{ color: accent }}>
-                    {phase === "answering" ? Math.ceil(timeLeft) : <Clock className="h-5 w-5 text-fog" />}
+                  <span className="font-mono text-2xl font-bold tabular-nums md:text-3xl" style={{ color: accent }}>
+                    {phase === "answering" ? Math.ceil(timeLeft) : <Clock className="h-7 w-7 text-fog" />}
                   </span>
                 </div>
               </div>
@@ -314,9 +314,9 @@ export default function QuizScreen({
             {!isOpen && (
               <div
                 className={cn(
-                  "mt-8 grid w-full gap-3",
+                  "mt-8 grid w-full gap-4 md:mt-10",
                   phase === "revealed"
-                    ? "mx-auto max-w-2xl grid-cols-1 place-items-center"
+                    ? "mx-auto max-w-3xl grid-cols-1 place-items-center"
                     : "md:grid-cols-2"
                 )}
               >
@@ -344,11 +344,11 @@ export default function QuizScreen({
                         onClick={() => { if (phase === "answering") { sfx.select(); lock(i); } }}
                         disabled={phase !== "answering"}
                         className={cn(
-                          "relative flex items-center gap-4 rounded-2xl border text-left transition-colors duration-300",
+                          "relative flex items-center gap-5 rounded-2xl border text-left transition-colors duration-300",
                           phase === "answering" &&
-                            "glass group sheen px-4 py-4 hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99] md:px-5 md:py-5",
+                            "glass group sheen px-5 py-5 hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99] md:px-7 md:py-6",
                           revealed && isCorrect &&
-                            "glass-col !border-lime/70 w-full justify-center px-7 py-6 shadow-[0_0_60px_rgba(184,255,60,0.3)]"
+                            "glass-col !border-lime/70 w-full justify-center px-8 py-8 shadow-[0_0_60px_rgba(184,255,60,0.3)]"
                         )}
                       >
                         {/* check badge — upper-left corner; letter always stays */}
@@ -357,24 +357,24 @@ export default function QuizScreen({
                             initial={{ scale: 0, rotate: -40 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ duration: 0.42, delay: 0.42, ease }}
-                            className="absolute -left-3 -top-3 z-10 grid h-8 w-8 place-items-center rounded-full bg-lime text-ink shadow-[0_0_22px_rgba(184,255,60,0.75)]"
+                            className="absolute -left-3.5 -top-3.5 z-10 grid h-10 w-10 place-items-center rounded-full bg-lime text-ink shadow-[0_0_22px_rgba(184,255,60,0.75)]"
                           >
-                            <Check className="h-4 w-4" strokeWidth={3.5} />
+                            <Check className="h-5 w-5" strokeWidth={3.5} />
                           </motion.span>
                         )}
                         <span
                           className={cn(
-                            "grid shrink-0 place-items-center rounded-lg font-mono font-bold transition-all",
+                            "grid shrink-0 place-items-center rounded-xl font-mono font-bold transition-all",
                             revealed && isCorrect
-                              ? "h-12 w-12 bg-lime text-ink text-lg"
-                              : "h-9 w-9 bg-white/5 text-fog text-sm group-hover:bg-white/10 group-hover:text-paper"
+                              ? "h-14 w-14 bg-lime text-ink text-2xl"
+                              : "h-12 w-12 bg-white/5 text-fog text-lg group-hover:bg-white/10 group-hover:text-paper"
                           )}
                         >
                           {letters[i]}
                         </span>
                         <span
                           className={cn("type-qa leading-snug", revealed && isCorrect ? "text-paper" : "text-paper/85")}
-                          style={{ fontSize: revealed && isCorrect ? "clamp(1.25rem, 2.4vw, 1.9rem)" : "0.95rem" }}
+                          style={{ fontSize: revealed && isCorrect ? "clamp(1.6rem, 3vw, 2.5rem)" : "clamp(1.15rem, 2vw, 1.55rem)" }}
                         >
                           {opt}
                         </span>
@@ -391,14 +391,14 @@ export default function QuizScreen({
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2, ease }}
-                className="mt-10 flex flex-col items-center gap-3"
+                className="mt-10 flex flex-col items-center gap-4"
               >
-                <p className="font-mono text-[11px] tracking-[0.3em] text-fog/60">THINK · ANSWER ALOUD · THEN REVEAL</p>
+                <p className="font-mono text-sm tracking-[0.3em] text-fog/60">THINK · ANSWER ALOUD · THEN REVEAL</p>
                 <button
                   onClick={() => enterCheck(false)}
-                  className="sheen group flex items-center gap-2.5 rounded-xl border border-violet/50 bg-violet/10 px-7 py-4 font-mono text-[12px] font-bold tracking-[0.2em] text-violet transition hover:bg-violet hover:text-ink active:scale-[0.98]"
+                  className="sheen group flex items-center gap-2.5 rounded-xl border border-violet/50 bg-violet/10 px-9 py-5 font-mono text-sm font-bold tracking-[0.2em] text-violet transition hover:bg-violet hover:text-ink active:scale-[0.98]"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-5 w-5" />
                   SHOW ANSWER
                 </button>
               </motion.div>
@@ -411,10 +411,16 @@ export default function QuizScreen({
                 transition={{ duration: 0.45, ease }}
                 className="glass-col !border-lime/40 mt-8 rounded-3xl p-6 text-center md:p-8"
               >
-                <p className="font-mono text-[10px] tracking-[0.4em] text-fog">THE ANSWER IS</p>
-                <p className="type-qa mt-3 text-lime" style={{ fontSize: "clamp(1.9rem, 3.4vw, 2.6rem)", fontWeight: 800 }}>
-                  {question.answerText}
-                </p>
+                <p className="font-mono text-xs tracking-[0.4em] text-fog">THE ANSWER IS</p>
+                <AutoFitText
+                  text={question.answerText ?? ""}
+                  min={26}
+                  max={96}
+                  lineHeight={1.08}
+                  className="mt-3 flex w-full items-center justify-center"
+                  style={{ height: "clamp(5rem, 18vh, 10rem)" }}
+                  textClassName="type-qa text-center text-lime"
+                />
                 <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <button
                     onClick={() => verdict(true)}
@@ -443,38 +449,38 @@ export default function QuizScreen({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4, ease }}
-                  className="glass-strong mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl px-5 py-4 sm:flex-row sm:items-center"
+                  className="glass-strong mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl px-6 py-5 sm:flex-row sm:items-center"
                 >
                   <div className="flex items-start gap-3">
                     {isOpen ? (
                       <span className={cn(
-                        "rounded-md px-2.5 py-1 font-mono text-[11px] font-bold tracking-widest",
+                        "rounded-md px-3 py-1.5 font-mono text-sm font-bold tracking-widest",
                         selfVerdict ? "bg-lime/15 text-lime" : "bg-rose/15 text-rose"
                       )}>
                         {selfVerdict ? `+${pointsFor} PT${pointsFor > 1 ? "S" : ""}` : "MISSED"}
                       </span>
                     ) : selected === question.answerIndex ? (
-                      <span className="rounded-md bg-lime/15 px-2.5 py-1 font-mono text-[11px] font-bold tracking-widest text-lime">
+                      <span className="rounded-md bg-lime/15 px-3 py-1.5 font-mono text-sm font-bold tracking-widest text-lime">
                         +{pointsFor} PT{pointsFor > 1 ? "S" : ""}
                       </span>
                     ) : timedOut ? (
-                      <span className="rounded-md bg-rose/15 px-2.5 py-1 font-mono text-[11px] font-bold tracking-widest text-rose">TIME’S UP</span>
+                      <span className="rounded-md bg-rose/15 px-3 py-1.5 font-mono text-sm font-bold tracking-widest text-rose">TIME’S UP</span>
                     ) : (
-                      <span className="rounded-md bg-rose/15 px-2.5 py-1 font-mono text-[11px] font-bold tracking-widest text-rose">WRONG</span>
+                      <span className="rounded-md bg-rose/15 px-3 py-1.5 font-mono text-sm font-bold tracking-widest text-rose">WRONG</span>
                     )}
                     {question.explanation && (
-                      <p className="flex items-start gap-2 text-[13px] leading-relaxed text-fog">
-                        <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber" />
+                      <p className="flex items-start gap-2 text-[15px] leading-relaxed text-fog md:text-base">
+                        <Lightbulb className="mt-1 h-4 w-4 shrink-0 text-amber" />
                         {question.explanation}
                       </p>
                     )}
                   </div>
                   <button
                     onClick={advance}
-                    className="group flex shrink-0 items-center gap-2 rounded-lg border border-line px-4 py-2.5 font-mono text-[11px] font-bold tracking-widest text-fog transition hover:border-lime/50 hover:text-paper"
+                    className="group flex shrink-0 items-center gap-2 rounded-lg border border-line px-5 py-3 font-mono text-sm font-bold tracking-widest text-fog transition hover:border-lime/50 hover:text-paper"
                   >
                     NEXT
-                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 </motion.div>
               )}
