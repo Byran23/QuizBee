@@ -42,6 +42,8 @@ export default function HostGame({
   const isOpen = question.kind === "open";
   const pointsFor = question.points > 0 ? question.points : round.def.points;
   const ordered = [...teams].sort((a, b) => a.contestant.seat - b.contestant.seat);
+  // live leaderboard: highest score first, re-orders as points are awarded
+  const rankedDisplay = [...ordered].sort((a, b) => b.total - a.total || a.contestant.seat - b.contestant.seat);
   const timeUp = left <= 0;
 
   /* ---------- timer: runs only while live ---------- */
@@ -117,8 +119,10 @@ export default function HostGame({
       }
       if (qState === "revealed") {
         const n = parseInt(e.key);
-        if (n >= 1 && n <= ordered.length && n <= 9) {
-          toggleAward(ordered[n - 1].contestant.id);
+        if (n >= 1 && n <= 9) {
+          // hotkeys follow seat numbers (stable) even while display re-sorts by score
+          const t = ordered.find((x) => x.contestant.seat === n);
+          if (t) toggleAward(t.contestant.id);
         } else if (e.key.toLowerCase() === "c") {
           setAwardSet([]);
         }
@@ -194,14 +198,14 @@ export default function HostGame({
         className="w-full"
       >
       <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(138px,1fr))] gap-2 px-4 md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:px-8">
-        {ordered.map((t) => {
+        {rankedDisplay.map((t) => {
           const inAward = awardSet.includes(t.contestant.id);
           const interactive = qState === "revealed";
           return (
             <motion.button
               key={t.contestant.id}
               layout
-              transition={{ duration: 0.4, ease }}
+              transition={{ duration: 0.5, ease }}
               onClick={() => interactive && toggleAward(t.contestant.id)}
               disabled={!interactive}
               className={cn(
@@ -224,7 +228,12 @@ export default function HostGame({
                 className="h-2 w-2 shrink-0 rounded-full"
                 style={{ background: t.contestant.color, boxShadow: `0 0 8px ${t.contestant.glow}` }}
               />
-              <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper md:text-[13px]">{t.contestant.name}</span>
+              <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper md:text-[13px]">
+                {t.contestant.seat <= 9 && (
+                  <span className="mr-1.5 rounded bg-white/10 px-1 py-0.5 font-mono text-[9px] text-fog">{t.contestant.seat}</span>
+                )}
+                {t.contestant.name}
+              </span>
               <span className="font-mono text-[13px] font-bold tabular-nums md:text-[15px]" style={{ color: t.contestant.color }}>{t.total}</span>
               {inAward && (
                 <motion.span

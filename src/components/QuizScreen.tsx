@@ -220,7 +220,7 @@ export default function QuizScreen({
               </motion.div>
             )}
           </AnimatePresence>
-          <div className="rounded-full border border-line bg-panel px-4 py-2 font-mono text-[13px] font-bold tracking-wider">
+          <div className="rounded-full border border-line bg-panel px-5 py-2.5 font-mono text-base font-bold tracking-wider md:text-lg">
             <motion.span key={score} initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="inline-block text-lime tabular-nums">
               {score}
             </motion.span>
@@ -270,27 +270,27 @@ export default function QuizScreen({
             {/* question row */}
             <div className="flex items-start justify-between gap-6 md:gap-10">
               <div className="min-w-0 flex-1">
-                <p className="font-mono text-sm tracking-[0.3em] text-fog md:text-[15px]">
+                <p className="font-mono text-base tracking-[0.28em] text-fog md:text-lg">
                   QUESTION {String(index + 1).padStart(2, "0")} / {String(round.questions.length).padStart(2, "0")}
                   <span className="mx-2 text-white/20">|</span>
                   <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""}</span>
-                  {isOpen && <span className="ml-2 rounded bg-white/5 px-2 py-1 text-[12px] text-violet">OPEN</span>}
+                  {isOpen && <span className="ml-2 rounded bg-white/5 px-2 py-1 text-sm text-violet">OPEN</span>}
                 </p>
                 <AutoFitText
                   key={`q-text-${index}`}
                   text={question.text}
-                  min={26}
-                  max={120}
-                  lineHeight={1.1}
+                  min={30}
+                  max={150}
+                  lineHeight={1.08}
                   className="mt-4 flex w-full items-center"
-                  style={{ height: "clamp(7rem, 30vh, 17rem)" }}
+                  style={{ height: "clamp(9rem, 38vh, 24rem)" }}
                   textClassName="type-qa text-paper"
                 />
               </div>
 
               {/* timer ring */}
-              <div className={cn("relative shrink-0", danger && "ring-pulse")}>
-                <svg width="104" height="104" viewBox="0 0 72 72" className="-rotate-90 md:h-[120px] md:w-[120px]">
+              <div className={cn("relative mt-1 shrink-0", danger && "ring-pulse")}>
+                <svg width="120" height="120" viewBox="0 0 72 72" className="-rotate-90 md:h-[140px] md:w-[140px]">
                   <circle cx="36" cy="36" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
                   <circle
                     cx="36" cy="36" r={R} fill="none"
@@ -303,8 +303,8 @@ export default function QuizScreen({
                   />
                 </svg>
                 <div className="absolute inset-0 grid place-items-center">
-                  <span className="font-mono text-2xl font-bold tabular-nums md:text-3xl" style={{ color: accent }}>
-                    {phase === "answering" ? Math.ceil(timeLeft) : <Clock className="h-7 w-7 text-fog" />}
+                  <span className="font-mono text-3xl font-bold tabular-nums md:text-4xl" style={{ color: accent }}>
+                    {phase === "answering" ? Math.ceil(timeLeft) : <Clock className="h-8 w-8 text-fog" />}
                   </span>
                 </div>
               </div>
@@ -314,9 +314,9 @@ export default function QuizScreen({
             {!isOpen && (
               <div
                 className={cn(
-                  "mt-8 grid w-full gap-4 md:mt-10",
+                  "mt-8 grid w-full gap-5 md:mt-10",
                   phase === "revealed"
-                    ? "mx-auto max-w-3xl grid-cols-1 place-items-center"
+                    ? "mx-auto max-w-4xl grid-cols-1 place-items-center"
                     : "md:grid-cols-2"
                 )}
               >
@@ -346,9 +346,9 @@ export default function QuizScreen({
                         className={cn(
                           "relative flex items-center gap-5 rounded-2xl border text-left transition-colors duration-300",
                           phase === "answering" &&
-                            "glass group sheen px-5 py-5 hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99] md:px-7 md:py-6",
+                            "glass group sheen px-6 py-6 hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99] md:px-8 md:py-7",
                           revealed && isCorrect &&
-                            "glass-col !border-lime/70 w-full justify-center px-8 py-8 shadow-[0_0_60px_rgba(184,255,60,0.3)]"
+                            "glass-col !border-lime/70 w-full justify-center px-8 py-9 shadow-[0_0_60px_rgba(184,255,60,0.3)]"
                         )}
                       >
                         {/* check badge — upper-left corner; letter always stays */}
@@ -366,15 +366,15 @@ export default function QuizScreen({
                           className={cn(
                             "grid shrink-0 place-items-center rounded-xl font-mono font-bold transition-all",
                             revealed && isCorrect
-                              ? "h-14 w-14 bg-lime text-ink text-2xl"
-                              : "h-12 w-12 bg-white/5 text-fog text-lg group-hover:bg-white/10 group-hover:text-paper"
+                              ? "h-16 w-16 bg-lime text-ink text-3xl"
+                              : "h-14 w-14 bg-white/5 text-fog text-xl group-hover:bg-white/10 group-hover:text-paper"
                           )}
                         >
                           {letters[i]}
                         </span>
                         <span
                           className={cn("type-qa leading-snug", revealed && isCorrect ? "text-paper" : "text-paper/85")}
-                          style={{ fontSize: revealed && isCorrect ? "clamp(1.6rem, 3vw, 2.5rem)" : "clamp(1.15rem, 2vw, 1.55rem)" }}
+                          style={{ fontSize: revealed && isCorrect ? "clamp(1.9rem, 3.4vw, 3rem)" : "clamp(1.35rem, 2.4vw, 1.9rem)" }}
                         >
                           {opt}
                         </span>
@@ -411,14 +411,14 @@ export default function QuizScreen({
                 transition={{ duration: 0.45, ease }}
                 className="glass-col !border-lime/40 mt-8 rounded-3xl p-6 text-center md:p-8"
               >
-                <p className="font-mono text-xs tracking-[0.4em] text-fog">THE ANSWER IS</p>
+                <p className="font-mono text-sm tracking-[0.4em] text-fog">THE ANSWER IS</p>
                 <AutoFitText
                   text={question.answerText ?? ""}
-                  min={26}
-                  max={96}
+                  min={30}
+                  max={110}
                   lineHeight={1.08}
                   className="mt-3 flex w-full items-center justify-center"
-                  style={{ height: "clamp(5rem, 18vh, 10rem)" }}
+                  style={{ height: "clamp(6rem, 22vh, 12rem)" }}
                   textClassName="type-qa text-center text-lime"
                 />
                 <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
