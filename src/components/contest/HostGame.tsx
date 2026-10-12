@@ -8,6 +8,7 @@ import { cn } from "../../utils/cn";
 import { QuizRound, TeamScore } from "../../lib/types";
 import { sfx, setMuted, isMuted } from "../../lib/sound";
 import RankBadge from "../RankBadge";
+import AutoFitText from "../AutoFitText";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -181,8 +182,18 @@ export default function HostGame({
         ))}
       </div>
 
-      {/* team strip — tiled grid that uses the whole width */}
-      <div className="mt-4 grid w-full grid-cols-[repeat(auto-fill,minmax(138px,1fr))] gap-2 px-4 md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:px-8">
+      {/* team strip — hides while the question is live, returns on reveal */}
+      <motion.div
+        animate={{
+          height: qState === "live" ? 0 : "auto",
+          opacity: qState === "live" ? 0 : 1,
+          marginTop: qState === "live" ? 0 : 16,
+        }}
+        transition={{ duration: 0.45, ease }}
+        style={{ overflow: "hidden" }}
+        className="w-full"
+      >
+      <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(138px,1fr))] gap-2 px-4 md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:px-8">
         {ordered.map((t) => {
           const inAward = awardSet.includes(t.contestant.id);
           const interactive = qState === "revealed";
@@ -228,6 +239,7 @@ export default function HostGame({
           );
         })}
       </div>
+      </motion.div>
 
       {/* ================= stage ================= */}
       <main className="flex w-full flex-1 flex-col items-center justify-center px-4 py-8 md:px-8">
@@ -289,13 +301,28 @@ export default function HostGame({
                 </div>
               </div>
 
-              {/* the question — maximized for distance readability */}
-              <h2
-                className="type-qa mt-4 w-full max-w-[92rem] leading-[1.05] text-paper md:mt-6"
-                style={{ fontSize: "clamp(3rem, min(8vw, 12vh), 8rem)" }}
-              >
-                {question.text}
-              </h2>
+              {/* the question — auto-sized to fill the available stage area */}
+              <AutoFitText
+                key={`q-text-${qIndex}-${qState}`}
+                text={question.text}
+                min={22}
+                max={160}
+                lineHeight={1.06}
+                className="mt-4 flex w-full max-w-[92rem] items-center justify-center md:mt-6"
+                style={{
+                  height:
+                    qState === "revealed"
+                      ? "clamp(4rem, 11vh, 7.5rem)" // shrink to make room for the answer
+                      : isOpen
+                        ? "clamp(9rem, 32vh, 24rem)"
+                        : "clamp(8rem, 27vh, 19rem)",
+                  transition: "height 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+                }}
+                textClassName={cn(
+                  "type-qa text-center transition-colors duration-500",
+                  qState === "revealed" ? "text-paper/55" : "text-paper"
+                )}
+              />
 
               {/* MCQ options — on reveal only the correct one remains, zoomed & centered */}
               {!isOpen && (
@@ -419,12 +446,15 @@ export default function HostGame({
                       style={{ fontFamily: "var(--font-sans)" }}
                     >
                       <p className="font-mono text-[11px] tracking-[0.4em] text-fog md:text-[12px]">THE ANSWER IS</p>
-                      <p
-                        className="type-qa mt-4 text-lime"
-                        style={{ fontSize: "clamp(2.5rem, 7vw, 5.75rem)", fontWeight: 800, lineHeight: 1.03 }}
-                      >
-                        {question.answerText}
-                      </p>
+                      <AutoFitText
+                        text={question.answerText ?? ""}
+                        min={24}
+                        max={120}
+                        lineHeight={1.04}
+                        className="mt-4 flex w-full items-center justify-center"
+                        style={{ height: "clamp(4.5rem, 16vh, 9rem)" }}
+                        textClassName="type-qa text-center text-lime"
+                      />
                     </div>
                   )}
                   {question.explanation && (
