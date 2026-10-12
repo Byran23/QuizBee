@@ -24,7 +24,7 @@ export default function RoundIntro({ round, count, total, onDone }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.5 } }}
       onClick={onDone}
-      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center overflow-hidden bg-ink/95 backdrop-blur-xl"
+      className="glass-strong fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center overflow-hidden"
     >
       {/* radial accent wash */}
       <motion.div

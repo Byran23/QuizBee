@@ -141,15 +141,13 @@ export default function HostGame({
     <div className="relative flex min-h-screen flex-col overflow-hidden">
       {/* top bar — slim, full width */}
       <header className="flex w-full items-center justify-between gap-4 px-4 pt-5 md:px-8">
-        <div
-          className="flex items-center gap-2.5 rounded-full border px-4 py-2 font-mono text-[11px] font-bold tracking-[0.2em] md:text-[12px]"
-          style={{ borderColor: `${round.def.color}55`, color: round.def.color, background: `${round.def.color}11` }}
-        >
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: round.def.color }} />
+        <span className="pip pip-glass md:!text-[12px]" style={{ color: round.def.color, borderColor: `${round.def.color}40`, background: `${round.def.color}0f` }}>
+          <span className="dot animate-pulse" />
           ROUND {roundIndex + 1}/{totalRounds} · {round.def.label.toUpperCase()}
-        </div>
+        </span>
         <div className="flex items-center gap-3">
-          <span className="rounded-full border border-line px-3.5 py-2 font-mono text-[11px] tracking-wider text-fog md:text-[12px]">
+          <span className="pip pip-glass md:!text-[12px] text-fog">
+            <span className="dot opacity-70" />
             Q{String(qIndex + 1).padStart(2, "0")}<span className="text-fog/50">/{String(round.questions.length).padStart(2, "0")}</span>
             <span className="ml-2 hidden md:inline" style={{ color: round.def.color }}>· {pointsFor} PT{pointsFor > 1 ? "S" : ""}</span>
           </span>
@@ -196,14 +194,18 @@ export default function HostGame({
               onClick={() => interactive && toggleAward(t.contestant.id)}
               disabled={!interactive}
               className={cn(
-                "relative flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition md:px-3 md:py-2.5",
+                "glass relative flex items-center gap-2 rounded-xl px-2.5 py-2 text-left transition md:px-3 md:py-2.5",
                 inAward
-                  ? "border-transparent"
+                  ? "!border-[var(--tc)]"
                   : interactive
-                    ? "border-line hover:border-white/30 hover:bg-white/[0.03]"
-                    : "cursor-default border-line"
+                    ? "hover:border-white/30 hover:bg-white/[0.05]"
+                    : "cursor-default"
               )}
-              style={inAward ? { background: `${t.contestant.color}18`, borderColor: t.contestant.color, boxShadow: `0 0 24px ${t.contestant.glow}` } : undefined}
+              style={
+                inAward
+                  ? ({ background: `${t.contestant.color}1f`, boxShadow: `0 0 24px ${t.contestant.glow}`, "--tc": t.contestant.color } as React.CSSProperties)
+                  : undefined
+              }
               title={t.contestant.seat <= 9 ? `Key ${t.contestant.seat}${interactive ? " · toggle award" : ""}` : interactive ? "Toggle award" : undefined}
             >
               <RankBadge rank={t.rank} size="sm" />
@@ -238,7 +240,7 @@ export default function HostGame({
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.45, ease }}
               onClick={reveal}
-              className="group flex min-h-[22rem] w-full max-w-7xl flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-panel/40 transition hover:border-white/25 hover:bg-panel/70 md:min-h-[26rem]"
+              className="glass group flex min-h-[22rem] w-full max-w-7xl flex-col items-center justify-center rounded-3xl transition hover:border-white/25 md:min-h-[26rem]"
             >
               <span className="font-mono text-[11px] tracking-[0.35em] text-fog md:text-[13px]">
                 QUESTION {String(qIndex + 1).padStart(2, "0")}
@@ -309,9 +311,9 @@ export default function HostGame({
                         transition={{ duration: 0.4, delay: 0.12 + i * 0.05, ease }}
                         className={cn(
                           "flex items-center gap-4 rounded-xl border px-5 py-4 text-left transition-all duration-300 md:px-6 md:py-5",
-                          revealed && isCorrect && "border-lime bg-lime/10 shadow-[0_0_40px_rgba(184,255,60,0.2)]",
-                          revealed && !isCorrect && "border-line opacity-30",
-                          !revealed && "border-line bg-panel/60"
+                          revealed && isCorrect && "glass-col !border-lime/60 shadow-[0_0_40px_rgba(184,255,60,0.2)]",
+                          revealed && !isCorrect && "glass opacity-30",
+                          !revealed && "glass"
                         )}
                       >
                         <span
@@ -372,7 +374,7 @@ export default function HostGame({
                   className="mt-8 flex w-full max-w-6xl flex-1 flex-col items-center justify-center md:mt-10"
                 >
                   {isOpen && (
-                    <div className="w-full max-w-4xl rounded-2xl border border-lime/40 bg-lime/5 px-6 py-7 md:py-9">
+                    <div className="glass-col !border-lime/40 w-full max-w-4xl rounded-3xl px-6 py-7 md:py-9">
                       <p className="font-mono text-[11px] tracking-[0.4em] text-fog md:text-[12px]">THE ANSWER IS</p>
                       <p
                         className="mt-4 font-display font-extrabold text-lime"
@@ -390,7 +392,7 @@ export default function HostGame({
                   )}
 
                   {/* award controls */}
-                  <div className="mt-6 flex w-full flex-col items-center gap-5 rounded-2xl border border-line bg-panel/70 px-5 py-6 backdrop-blur md:mt-8 md:px-8 md:py-7">
+                  <div className="glass-strong mt-6 flex w-full flex-col items-center gap-5 rounded-3xl px-5 py-6 md:mt-8 md:px-8 md:py-7">
                     <p className="flex items-center gap-2 font-mono text-[11px] tracking-[0.3em] text-fog md:text-[12px]">
                       <Award className="h-4 w-4 text-lime" />
                       TAP TEAMS THAT GOT IT · +{pointsFor} PT{pointsFor > 1 ? "S" : ""} EACH · KEYS 1–{Math.min(9, teams.length)}

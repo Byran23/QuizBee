@@ -135,7 +135,7 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
         className="mx-auto mt-12 grid max-w-4xl gap-4 px-6 sm:grid-cols-[1.3fr_1fr]"
       >
         {/* score + donut */}
-        <div className="flex items-center justify-between gap-6 rounded-2xl border border-line bg-panel p-7">
+        <div className="glass flex items-center justify-between gap-6 rounded-3xl p-7">
           <div>
             <p className="font-mono text-[10px] tracking-[0.3em] text-fog">SCORE</p>
             <p className="font-display text-6xl font-extrabold tabular-nums text-lime md:text-7xl" style={{ fontWeight: 800 }}>
@@ -176,7 +176,7 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
         </div>
 
         {/* save to leaderboard */}
-        <div className="flex flex-col justify-between rounded-2xl border border-line bg-panel p-7">
+        <div className="glass flex flex-col justify-between rounded-3xl p-7">
           <div>
             <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] text-fog">
               <Crown className="h-3.5 w-3.5 text-amber" /> HALL OF FAME
@@ -228,7 +228,7 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4, ease }}
-        className="mx-6 mt-4 max-w-4xl rounded-2xl border border-line bg-panel px-7 py-6 sm:mx-auto"
+        className="glass mx-6 mt-4 max-w-4xl rounded-3xl px-7 py-6 sm:mx-auto"
       >
         <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] text-fog">
           <Target className="h-3.5 w-3.5 text-sky" /> ROUND BREAKDOWN
@@ -261,7 +261,7 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5, ease }}
-        className="mx-6 mt-4 max-w-4xl rounded-2xl border border-line bg-panel sm:mx-auto"
+        className="glass mx-6 mt-4 max-w-4xl rounded-3xl sm:mx-auto"
       >
         <button onClick={() => setReviewOpen((v) => !v)} className="flex w-full items-center justify-between px-7 py-6">
           <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] text-fog">
@@ -280,7 +280,7 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
             >
               <div className="space-y-2 border-t border-line px-7 py-6">
                 {records.map((r, i) => (
-                  <div key={i} className="rounded-xl border border-line/70 bg-ink/40 p-4">
+                  <div key={i} className="glass !bg-white/[0.03] rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <span className={cn(
                         "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md",

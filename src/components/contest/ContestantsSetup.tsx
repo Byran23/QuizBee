@@ -94,7 +94,7 @@ export default function ContestantsSetup({ data, onBegin, onBack }: Props) {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2, ease }}
-        className="mt-12 w-full max-w-2xl rounded-2xl border border-line bg-panel/80 p-6 backdrop-blur md:p-8"
+        className="glass mt-12 w-full max-w-2xl rounded-3xl p-6 md:p-8"
       >
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 font-mono text-[11px] font-semibold tracking-[0.25em] text-fog">
@@ -116,7 +116,7 @@ export default function ContestantsSetup({ data, onBegin, onBack }: Props) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
                   transition={{ duration: 0.35, ease, delay: i * 0.05 }}
-                  className="group flex items-center gap-3 rounded-xl border border-line bg-ink/50 p-2.5 pl-3.5 transition focus-within:border-white/25"
+                  className="glass group flex items-center gap-3 rounded-xl p-2.5 pl-3.5 transition focus-within:border-white/25"
                 >
                   <span className="font-mono text-[11px] font-bold text-fog/60 tabular-nums">{i + 1}</span>
                   <button

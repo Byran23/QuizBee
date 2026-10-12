@@ -19,9 +19,7 @@
   --color-violet: #8b7cff;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
   background: var(--color-ink);
@@ -31,71 +29,94 @@ body {
   overflow-x: hidden;
 }
 
-::selection {
-  background: var(--color-lime);
-  color: #07070a;
-}
+::selection { background: var(--color-lime); color: #07070a; }
 
 /* ---------- scrollbar ---------- */
 ::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #0a0a0e; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #26262e;
+  background: rgba(255,255,255,0.1);
   border-radius: 8px;
-  border: 2px solid #0a0a0e;
+  border: 2px solid #07070a;
 }
-::-webkit-scrollbar-thumb:hover { background: #3a3a44; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 
-/* ---------- grain ---------- */
+/* ---------- glass ---------- */
+.glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.glass-strong {
+  position: relative;
+  background: rgba(10, 10, 14, 0.52);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.glass-col {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.pip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  padding: 0.45rem 0.9rem;
+  line-height: 1;
+}
+.pip .dot {
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+.pip-glass {
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.pip-lime  { background: rgba(184, 255, 60, 0.1); border: 1px solid rgba(184, 255, 60, 0.32); color: #B8FF3C; }
+.pip-sky   { background: rgba(92, 210, 255, 0.1);  border: 1px solid rgba(92, 210, 255, 0.32);  color: #5CD2FF; }
+.pip-amber { background: rgba(255, 184, 77, 0.1);  border: 1px solid rgba(255, 184, 77, 0.32);  color: #FFB84D; }
+.pip-rose  { background: rgba(255, 92, 138, 0.1);  border: 1px solid rgba(255, 92, 138, 0.32);  color: #FF5C8A; }
+.pip-violet{ background: rgba(139, 124, 255, 0.1); border: 1px solid rgba(139, 124, 255, 0.32); color: #8B7CFF; }
+
+/* ---------- grain (very subtle) ---------- */
 .grain::after {
   content: "";
   position: fixed;
   inset: -50%;
   z-index: 70;
   pointer-events: none;
-  opacity: 0.05;
+  opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: grain-shift 9s steps(10) infinite;
-}
-@keyframes grain-shift {
-  0%, 100% { transform: translate(0, 0); }
-  20% { transform: translate(-2%, 3%); }
-  40% { transform: translate(3%, -2%); }
-  60% { transform: translate(-3%, -3%); }
-  80% { transform: translate(2%, 2%); }
 }
 
 /* ---------- marquee ---------- */
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.animate-marquee { animation: marquee 30s linear infinite; }
 
-/* ---------- dotted grid backdrop ---------- */
-.dot-grid {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-/* ---------- scanline sweep ---------- */
-@keyframes scan {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-.scanline {
-  animation: scan 7s linear infinite;
-}
-
-/* ---------- outline display text ---------- */
+/* ---------- outline text ---------- */
 .text-outline {
-  -webkit-text-stroke: 1.5px rgba(244, 244, 240, 0.35);
+  -webkit-text-stroke: 1.5px rgba(244, 244, 240, 0.3);
   color: transparent;
 }
 
-/* ---------- pulsing glow keyframe ---------- */
+/* ---------- float orb ---------- */
 @keyframes float-slow {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(3%, -4%) scale(1.06); }
@@ -103,17 +124,13 @@ body {
 .animate-float-slow { animation: float-slow 12s ease-in-out infinite; }
 
 @keyframes ring-tick {
-  0% { transform: scale(1); opacity: 0.9; }
+  0%, 100% { transform: scale(1); opacity: 0.9; }
   50% { transform: scale(1.12); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.9; }
 }
 .ring-pulse { animation: ring-tick 1s ease-in-out infinite; }
 
-/* ---------- option button sheen ---------- */
-.sheen {
-  position: relative;
-  overflow: hidden;
-}
+/* ---------- option sheen ---------- */
+.sheen { position: relative; overflow: hidden; }
 .sheen::before {
   content: "";
   position: absolute;
@@ -125,8 +142,6 @@ body {
 .sheen:hover::before { transform: translateX(120%); }
 
 /* ---------- segmented progress ---------- */
-.seg {
-  transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s;
-}
+.seg { transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s; }
 
 input:focus { outline: none; }

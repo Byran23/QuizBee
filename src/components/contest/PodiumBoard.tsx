@@ -118,8 +118,8 @@ export default function PodiumBoard({ standings, rounds, final, playedRounds, on
                 className={cn("mt-3 w-full rounded-t-xl border border-b-0 border-line bg-gradient-to-b to-transparent", heights[gi] ?? "h-16")}
                 style={{ backgroundImage: `linear-gradient(to bottom, ${group[0].contestant.color}33, transparent)` }}
               >
-                <div className="flex h-full flex-col items-center justify-start pt-4">
-                  <span className="font-display text-2xl font-extrabold text-outline md:text-3xl" style={{ WebkitTextStrokeColor: `${group[0].contestant.color}cc`, fontWeight: 800 }}>
+                <div className="glass-col flex h-full flex-col items-center justify-start pt-4">
+                  <span className={cn("font-display text-2xl font-extrabold md:text-3xl", rank > 3 ? "text-outline" : "")} style={rank <= 3 ? { color: group[0].contestant.color, textShadow: `0 0 24px ${group[0].contestant.glow}`, fontWeight: 800 } : { fontWeight: 800 }}>
                     {ordinal(rank)}
                   </span>
                 </div>
@@ -134,7 +134,7 @@ export default function PodiumBoard({ standings, rounds, final, playedRounds, on
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5, ease }}
-        className="mt-10 w-full max-w-5xl overflow-x-auto rounded-2xl border border-line bg-panel/80 backdrop-blur"
+        className="glass mt-10 w-full max-w-5xl overflow-x-auto rounded-3xl"
       >
         <table className="w-full min-w-[560px] text-left">
           <thead>

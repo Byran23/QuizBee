@@ -198,13 +198,10 @@ export default function QuizScreen({
     <div className="relative flex min-h-screen flex-col">
       {/* top bar */}
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 pt-6">
-        <div
-          className="flex items-center gap-2.5 rounded-full border px-4 py-2 font-mono text-[11px] font-bold tracking-[0.2em]"
-          style={{ borderColor: `${round.def.color}55`, color: round.def.color, background: `${round.def.color}11` }}
-        >
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: round.def.color }} />
+        <span className="pip pip-glass" style={{ color: round.def.color, borderColor: `${round.def.color}40`, background: `${round.def.color}0f` }}>
+          <span className="dot animate-pulse" />
           R{roundIndex + 1}/{totalRounds} · {round.def.label.toUpperCase()}
-        </div>
+        </span>
 
         <div className="flex items-center gap-3">
           <AnimatePresence>
@@ -319,11 +316,11 @@ export default function QuizScreen({
                       onClick={() => { if (phase === "answering") { sfx.select(); lock(i); } }}
                       disabled={phase !== "answering"}
                       className={cn(
-                        "group relative flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-300 md:p-5",
-                        phase === "answering" && "sheen border-line bg-panel hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99]",
-                        revealed && isCorrect && "border-lime bg-lime/10 shadow-[0_0_30px_rgba(184,255,60,0.15)]",
-                        revealed && isSelected && !isCorrect && "border-rose bg-rose/10",
-                        revealed && !isCorrect && !isSelected && "border-line bg-panel opacity-40"
+                        "glass group relative flex items-center gap-4 rounded-2xl p-4 text-left transition-all duration-300 md:p-5",
+                        phase === "answering" && "sheen hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99]",
+                        revealed && isCorrect && "!border-lime/60 bg-lime/10 shadow-[0_0_30px_rgba(184,255,60,0.15)]",
+                        revealed && isSelected && !isCorrect && "!border-rose/60 bg-rose/10",
+                        revealed && !isCorrect && !isSelected && "opacity-40"
                       )}
                     >
                       <span
@@ -370,7 +367,7 @@ export default function QuizScreen({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease }}
-                className="mt-8 rounded-2xl border border-lime/40 bg-lime/5 p-6 text-center md:p-8"
+                className="glass-col !border-lime/40 mt-8 rounded-3xl p-6 text-center md:p-8"
               >
                 <p className="font-mono text-[10px] tracking-[0.4em] text-fog">THE ANSWER IS</p>
                 <p className="mt-3 font-display text-3xl font-extrabold text-lime md:text-4xl" style={{ fontWeight: 800 }}>
@@ -404,7 +401,7 @@ export default function QuizScreen({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4, ease }}
-                  className="mt-6 flex flex-col items-start justify-between gap-4 rounded-xl border border-line bg-panel-2/80 px-5 py-4 backdrop-blur sm:flex-row sm:items-center"
+                  className="glass-strong mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl px-5 py-4 sm:flex-row sm:items-center"
                 >
                   <div className="flex items-start gap-3">
                     {isOpen ? (

@@ -157,7 +157,7 @@ export default function SetupScreen({ onReady }: Props) {
           className="mx-auto mt-16 grid max-w-4xl gap-6 lg:grid-cols-[1.5fr_1fr]"
         >
           {/* left: input */}
-          <div className="rounded-2xl border border-line bg-panel/80 p-6 backdrop-blur md:p-8">
+          <div className="glass-strong rounded-3xl p-6 md:p-8">
             <div className="flex items-center gap-2 font-mono text-[11px] font-semibold tracking-[0.25em] text-fog">
               <Link2 className="h-4 w-4 text-lime" />
               CONNECT YOUR SHEET
@@ -296,7 +296,7 @@ export default function SetupScreen({ onReady }: Props) {
           </div>
 
           {/* right: demo card */}
-          <div className="flex flex-col justify-between rounded-2xl border border-lime/25 bg-gradient-to-b from-lime/10 to-transparent p-6 md:p-8">
+          <div className="glass-col !border-lime/30 flex flex-col justify-between rounded-3xl p-6 md:p-8">
             <div>
               <div className="flex items-center gap-2 font-mono text-[11px] font-semibold tracking-[0.25em] text-lime">
                 <ListTodo className="h-4 w-4" />
@@ -327,7 +327,7 @@ export default function SetupScreen({ onReady }: Props) {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.35, ease }}
-          className="mx-auto mt-6 max-w-4xl rounded-2xl border border-line bg-panel/60 backdrop-blur"
+          className="glass mx-auto mt-6 max-w-4xl rounded-3xl"
         >
           <button
             onClick={() => setShowGuide((v) => !v)}
@@ -420,7 +420,7 @@ export default function SetupScreen({ onReady }: Props) {
             { n: "02", t: "Paste the link", d: "Your sheet is read over the wire — nothing is stored anywhere." },
             { n: "03", t: "Enter the arena", d: "Rounds are auto-built from your Round column. Let the bee begin." },
           ].map((s) => (
-            <div key={s.n} className="group rounded-2xl border border-line bg-panel/50 p-6 transition hover:border-lime/30">
+            <div key={s.n} className="glass group rounded-2xl p-6 transition hover:border-lime/30">
               <span className="font-display text-2xl font-bold text-outline transition group-hover:text-lime" style={{ WebkitTextStrokeWidth: 1.4 }}>
                 {s.n}
               </span>

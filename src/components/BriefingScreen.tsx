@@ -120,8 +120,7 @@ export default function BriefingScreen({ data, sourceUrl, via, onStart, onBack, 
             initial={{ opacity: 0, y: 40, rotateX: -12 }}
             animate={{ opacity: 1, y: 0, rotateX: 0 }}
             transition={{ duration: 0.7, delay: 0.35 + i * 0.1, ease }}
-            className="group relative overflow-hidden rounded-2xl border border-line bg-panel p-5 transition hover:-translate-y-1"
-            style={{ boxShadow: `0 0 0 0 transparent` }}
+            className="glass group relative overflow-hidden rounded-2xl p-5 transition hover:-translate-y-1"
           >
             <div
               className="absolute -top-10 -right-10 h-24 w-24 rounded-full opacity-20 blur-2xl transition group-hover:opacity-40"
@@ -185,26 +184,26 @@ export default function BriefingScreen({ data, sourceUrl, via, onStart, onBack, 
       >
         <button
           onClick={() => onStart("solo")}
-          className="sheen group flex flex-col items-start gap-2 rounded-2xl bg-lime p-6 text-left text-ink transition hover:shadow-[0_0_50px_rgba(184,255,60,0.4)] active:scale-[0.98]"
+          className="glass-col !border-lime/40 sheen group flex flex-col items-start gap-2 rounded-2xl p-6 text-left text-lime transition hover:!border-lime/70 hover:shadow-[0_0_40px_rgba(184,255,60,0.25)] active:scale-[0.98]"
         >
           <span className="flex items-center gap-2 font-mono text-sm font-bold tracking-[0.2em]">
             <FastForward className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             SOLO RUN
           </span>
-          <span className="text-[13px] font-medium leading-snug text-ink/70">
+          <span className="text-[13px] font-medium leading-snug text-fog">
             Play it yourself — timed answers, streaks and a personal verdict.
           </span>
         </button>
         <button
           onClick={() => onStart("contest")}
-          className="sheen group flex flex-col items-start gap-2 rounded-2xl border border-sky/50 bg-sky/10 p-6 text-left text-sky transition hover:bg-sky hover:text-ink hover:shadow-[0_0_50px_rgba(92,210,255,0.4)] active:scale-[0.98]"
+          className="glass-col !border-sky/40 sheen group flex flex-col items-start gap-2 rounded-2xl p-6 text-left text-sky transition hover:!border-sky/70 hover:shadow-[0_0_40px_rgba(92,210,255,0.25)] active:scale-[0.98]"
         >
           <span className="flex items-center gap-2 font-mono text-sm font-bold tracking-[0.2em]">
             <Swords className="h-4 w-4 transition-transform group-hover:rotate-12" />
             COMPETITION
           </span>
-          <span className="text-[13px] font-medium leading-snug text-current opacity-70">
-            2–8 teams, host calls the shots, live standings and a champion podium.
+          <span className="text-[13px] font-medium leading-snug text-fog">
+            2–20 teams, host calls the shots, live standings and a champion podium.
           </span>
         </button>
         <button
