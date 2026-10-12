@@ -51,9 +51,9 @@ export default function SetupScreen({ onReady }: Props) {
       return;
     }
     setStatus("loading");
-    setPhase("Contacting Google Sheets…");
+    setPhase("Contacting Google…");
     try {
-      setPhase("Reading rows & matching columns…");
+      setPhase("Trying export engines (CSV → JSON)…");
       const result = await fetchQuizFromSheet(ref, tab || undefined);
       setPhase("Building your arena…");
       await new Promise((r) => setTimeout(r, 450));
@@ -258,7 +258,8 @@ export default function SetupScreen({ onReady }: Props) {
                   <div>
                     <p className="text-sm leading-relaxed text-paper">{error}</p>
                     <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-fog">
-                      Fix: Sheets → File → Share → General access → “Anyone with the link” · Viewer
+                      Fastest fix: Sheets → File → Share → “Publish to the web” → Entire document → CSV → copy that link.<br />
+                      Or: File → Share → General access → “Anyone with the link · Viewer”, then paste the normal /edit link.
                     </p>
                   </div>
                 </motion.div>

@@ -25,72 +25,117 @@ export function parseSheetInput(input: string): SheetRef | null {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Fetching (gviz CSV first, opensheet JSON fallback)                 */
+/*  Fetching: explicit pub output → gviz CSV → gviz table JSON         */
 /* ------------------------------------------------------------------ */
 
-async function fetchWithTimeout(url: string, ms = 12000): Promise<Response> {
+export class SheetFetchError extends Error {}
+
+async function fetchText(url: string, ms = 15000): Promise<string> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
-    return await fetch(url, { signal: ctrl.signal });
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      const via = body.includes("serviceLogin") || body.includes("accounts.google")
+        ? " (private — share as “Anyone with the link”)"
+        : "";
+      throw new SheetFetchError(`HTTP ${res.status}${via}`);
+    }
+    return await res.text();
+  } catch (e) {
+    if (e instanceof SheetFetchError) throw e;
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new SheetFetchError("Request timed out — Google is slow, retry in a moment");
+    }
+    throw new SheetFetchError("Network error — check your connection");
   } finally {
     clearTimeout(t);
   }
 }
 
-async function fetchCsv(ref: SheetRef, tab?: string): Promise<string> {
+/** /pub?output=csv — works for “Published to the web” and generally for sheet links. */
+async function fetchPubCsv(ref: SheetRef, tab?: string): Promise<string[][]> {
+  let url = `https://docs.google.com/spreadsheets/d/${ref.id}/pub?output=csv`;
+  if (tab?.trim()) url += `&sheet=${encodeURIComponent(tab.trim())}`;
+  else if (ref.gid) url += `&gid=${ref.gid}`;
+  const text = await fetchText(url);
+  if (/^\s*<!doctype html/i.test(text) || text.includes("<html"))
+    throw new SheetFetchError("Not published — publish via File → Share (“Anyone with the link”), or use a plain sheet + ID");
+  return parseCsv(text);
+}
+
+/** gviz CSV — rock solid for “Anyone with the link” sheets when id/gid are explicit. */
+async function fetchGvizCsv(ref: SheetRef, tab?: string): Promise<string[][]> {
   let url = `https://docs.google.com/spreadsheets/d/${ref.id}/gviz/tq?tqx=out:csv`;
   if (tab?.trim()) url += `&sheet=${encodeURIComponent(tab.trim())}`;
   else if (ref.gid) url += `&gid=${ref.gid}`;
-  const res = await fetchWithTimeout(url);
-  if (!res.ok) throw new Error(`Google returned ${res.status}`);
-  const text = await res.text();
-  if (/^\s*<!doctype html/i.test(text) || text.includes("accounts.google.com"))
-    throw new Error("Sheet is private");
-  return text;
+  const text = await fetchText(url);
+  if (/^\s*<!doctype html/i.test(text)) throw new SheetFetchError("Sheet is private or not shared via link");
+  return parseCsv(text);
 }
 
-async function fetchJson(ref: SheetRef, tab?: string): Promise<Record<string, string>[]> {
-  const tabName = tab?.trim() || "1";
-  const url = `https://opensheet.elk.sh/${ref.id}/${encodeURIComponent(tabName)}`;
-  const res = await fetchWithTimeout(url);
-  if (!res.ok) throw new Error(`Fallback returned ${res.status}`);
-  const json = await res.json();
-  if (!Array.isArray(json)) throw new Error("Unexpected response");
-  return json;
+/** gviz table JSON — works even when output=csv is blocked for a given sheet. */
+async function fetchGvizJson(ref: SheetRef, tab?: string): Promise<string[][]> {
+  let url = `https://docs.google.com/spreadsheets/d/${ref.id}/gviz/tq?headers=1&tqx=responseHandler:_h`;
+  if (tab?.trim()) url += `&sheet=${encodeURIComponent(tab.trim())}`;
+  else if (ref.gid) url += `&gid=${ref.gid}`;
+  const text = await fetchText(url);
+  const jsonText = extractJsonP(text);
+  const j = JSON.parse(jsonText);
+  if (j?.status === "error") {
+    const reasons = (j.errors || []).map((e: any) => e.detailed_message || e.message).join("; ");
+    throw new SheetFetchError(`Google rejected the read: ${reasons || "unknown"}`);
+  }
+  const table = j?.table;
+  if (!table) throw new SheetFetchError("No table data returned");
+  const cols: string[] = (table.cols || []).map((c: any) => (c?.label || c?.id || "").toString());
+  const rows: string[][] = (table.rows || []).map((r: any) =>
+    (cols.length ? cols : Array.from({ length: (r.c || []).length }, () => "")).map(
+      (_: string, ci: number) => {
+        const cell = r.c?.[ci];
+        if (!cell) return "";
+        return String(cell.f ?? cell.v ?? "");
+      }
+    )
+  );
+  return [cols, ...rows];
 }
 
-/** Main entry: fetch a sheet and normalize into QuizData */
+function extractJsonP(text: string): string {
+  const isJsonP = text.indexOf("_h(") > -1;
+  const start = isJsonP ? text.indexOf("(", text.indexOf("_h")) : text.indexOf("{");
+  const end = text.lastIndexOf(isJsonP ? ")" : "}");
+  if (start === -1 || end <= start) throw new SheetFetchError("Unexpected Google response");
+  return text.slice(start + 1, end);
+}
+
+const FETCHERS: { name: string; fn: (ref: SheetRef, tab?: string) => Promise<string[][]> }[] = [
+  { name: "pub", fn: fetchPubCsv },
+  { name: "gviz-csv", fn: fetchGvizCsv },
+  { name: "gviz-json", fn: fetchGvizJson },
+];
+
+/** Main entry: try each engine, keep the first one with real rows. */
 export async function fetchQuizFromSheet(ref: SheetRef, tab?: string): Promise<FetchResult> {
-  let csvError: string | null = null;
-  try {
-    const csv = await fetchCsv(ref, tab);
-    const rows = parseCsv(csv);
-    if (rows.length < 2) throw new Error("Sheet appears to be empty");
-    const data = normalizeRows(rows, "Google Sheet");
-    return { data, via: "csv" };
-  } catch (e) {
-    csvError = e instanceof Error ? e.message : String(e);
-    if (csvError === "Sheet is private") {
-      throw new SheetFetchError(
-        "This sheet is private. Share it as “Anyone with the link · Viewer”, then try again."
-      );
+  const failures: string[] = [];
+  for (const { name, fn } of FETCHERS) {
+    try {
+      const rows = await fn(ref, tab);
+      if (rows.length < 2) {
+        failures.push(`${name}: sheet has no data rows`);
+        continue;
+      }
+      const data = normalizeRows(rows, "Google Sheet");
+      return { data, via: name === "pub" ? "csv" : "json" };
+    } catch (e) {
+      failures.push(`${name}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
-  // JSON fallback
-  try {
-    const json = await fetchJson(ref, tab);
-    if (json.length === 0) throw new Error("Sheet appears to be empty");
-    const data = normalizeObjects(json, "Google Sheet");
-    return { data, via: "json" };
-  } catch {
-    throw new SheetFetchError(
-      "Couldn’t read that sheet. Make sure the link is correct and the sheet is shared publicly (“Anyone with the link · Viewer”)."
-    );
-  }
+  throw new SheetFetchError(
+    `Couldn’t read that sheet. ${failures.join(" · ")}. Fix: open Sheets → File → Share → “Anyone with the link · Viewer” (or File → Share → “Publish to the web” → entire document → CSV), then paste the link again.`
+  );
 }
-
-export class SheetFetchError extends Error {}
 
 /* ------------------------------------------------------------------ */
 /*  CSV parsing (RFC-4180-ish)                                         */
@@ -250,17 +295,18 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
       options = splitOptions(get(col.options));
     }
     const answerRaw = get(col.answer).trim();
-    // multiple choice needs 2+ options; otherwise it's an open question
-    // (open questions only require an answer text)
-    if (options.length < 2 && !answerRaw) {
-      skipped++;
+    // MC needs 2+ options; open questions just need an answer text.
+    // If there's exactly one option, treat it as open with the option as fallback answer.
+    const isOpen = options.length < 2;
+    if (isOpen && !answerRaw && options.length === 0) {
+      skipped++; // no answer at all → drop the row
       continue;
     }
     const ptsParsed = parseFloat(get(col.points));
     raw.push({
       question,
-      options: options.length >= 2 ? options : [],
-      answerRaw,
+      options: isOpen ? [] : options,
+      answerRaw: answerRaw || (isOpen ? options[0] : ""), // fallback: lone option = answer
       round: get(col.round).trim(),
       points: Number.isFinite(ptsParsed) && ptsParsed > 0 ? ptsParsed : null,
       explanation: get(col.explanation).trim(),
@@ -268,13 +314,6 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
   }
 
   return buildQuizData(raw, skipped, sourceLabel);
-}
-
-export function normalizeObjects(objs: Record<string, string>[], sourceLabel: string): QuizData {
-  const keys = objs[0] ? Object.keys(objs[0]) : [];
-  const header = keys.map((k) => norm(k));
-  const rows: string[][] = [header, ...objs.map((o) => keys.map((k) => String(o[k] ?? "")))];
-  return normalizeRows(rows, sourceLabel);
 }
 
 function splitOptions(raw: string): string[] {
@@ -303,7 +342,7 @@ export function recomputeTotals(data: QuizData): QuizData {
 export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: string): QuizData {
   if (raw.length === 0) {
     throw new SheetFetchError(
-      "Found a header row but no usable questions. Each row needs a question, at least 2 options, and an answer."
+      "Found a header row but no usable questions. Rows need a Question + Answer (for open questions) or Question + 2+ options + Answer (for multiple choice)."
     );
   }
 
@@ -315,14 +354,18 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
     let answerIndex = -1;
     let answerText: string | undefined;
     if (isMcq) {
-      answerIndex = r.answerRaw ? resolveAnswerIndex(r.answerRaw, r.options) : 0;
-      if (r.answerRaw && answerIndex === -1) {
-        droppedBadAnswers++;
-        answerIndex = 0; // keep the question, first option becomes key
+      answerIndex = r.answerRaw ? resolveAnswerIndex(r.answerRaw, r.options) : -1;
+      if (answerIndex === -1) {
+        // unresolvable or blank answer → default to option A, count as skipped-detail
+        if (r.answerRaw) droppedBadAnswers++;
+        answerIndex = 0;
       }
-      if (!r.answerRaw) answerIndex = 0;
     } else {
       answerText = r.answerRaw.trim();
+      if (!answerText) {
+        droppedBadAnswers++;
+        answerText = "—"; // marker so the row doesn't disappear
+      }
     }
     questions.push({
       id: `q-${i}-${questions.length}`,
