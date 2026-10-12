@@ -1,0 +1,27 @@
+import { QuizData } from "./types";
+import { buildQuizData } from "./sheets";
+
+const DEMO_ROWS = [
+  // ---- EASY (1 pt · 15s) ----
+  { question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Mercury"], answerRaw: "B", round: "Easy", points: null, explanation: "Mars appears red because of iron oxide — rust — on its surface." },
+  { question: "What is the chemical symbol for gold?", options: ["Ag", "Go", "Au", "Gd"], answerRaw: "Au", round: "Easy", points: null, explanation: "Au comes from the Latin word “aurum”, meaning shining dawn." },
+  { question: "How many sides does a hexagon have?", options: ["5", "6", "7", "8"], answerRaw: "6", round: "Easy", points: null, explanation: "“Hexa” is Greek for six." },
+  // ---- AVERAGE (2 pts · 20s) ----
+  { question: "Which scientist proposed the theory of general relativity?", options: ["Isaac Newton", "Niels Bohr", "Albert Einstein", "Max Planck"], answerRaw: "C", round: "Average", points: null, explanation: "Einstein published general relativity in 1915, redefining gravity as curved spacetime." },
+  { question: "The Fibonacci sequence begins 0, 1, 1, 2, 3 — what comes next?", options: ["4", "5", "6", "8"], answerRaw: "5", round: "Average", points: null, explanation: "Each term is the sum of the two before it: 2 + 3 = 5." },
+  { question: "Which is the smallest prime number?", options: ["0", "1", "2", "3"], answerRaw: "2", round: "Average", points: null, explanation: "1 is not prime, and 2 is the only even prime number." },
+  // ---- DIFFICULT (3 pts · 25s) ----
+  { question: "In computing, what does “HTTP” stand for?", options: ["HyperText Transfer Protocol", "High Throughput Transmission Process", "HyperText Terminal Program", "Host Text Transfer Protocol"], answerRaw: "A", round: "Difficult", points: null, explanation: "HTTP has powered the web since Tim Berners-Lee introduced it in 1991." },
+  { question: "Which organelle is known as the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Golgi apparatus", "Mitochondrion"], answerRaw: "D", round: "Difficult", points: null, explanation: "Mitochondria generate most of the cell’s ATP — its usable energy." },
+  { question: "Which year did the Chernobyl disaster occur?", options: ["1979", "1984", "1986", "1991"], answerRaw: "1986", round: "Difficult", points: null, explanation: "Reactor No. 4 exploded on April 26, 1986, in Soviet Ukraine." },
+  { question: "What is 15% of 200?", options: [], answerRaw: "30", round: "Average", points: null, explanation: "15% × 200 = 0.15 × 200 = 30. An open-answer question — no options needed." },
+  // ---- CLINCHER (5 pts · 30s) ----
+  { question: "What is the square root of 324?", options: ["16", "18", "20", "22"], answerRaw: "B", round: "Clincher", points: null, explanation: "18 × 18 = 324." },
+  { question: "Which mathematical constant equals approximately 2.71828?", options: ["π (pi)", "φ (golden ratio)", "e (Euler’s number)", "γ (Euler–Mascheroni)"], answerRaw: "C", round: "Clincher", points: null, explanation: "Euler’s number e is the base of natural logarithms, central to growth and decay." },
+  { question: "The Rosetta Stone was key to deciphering which writing system?", options: ["Cuneiform", "Mayan glyphs", "Linear B", "Egyptian hieroglyphs"], answerRaw: "D", round: "Clincher", points: null, explanation: "Decoded by Champollion in 1822, it carried the same decree in three scripts." },
+  { question: "Name the largest desert on Earth.", options: [], answerRaw: "Antarctic Desert", round: "Clincher", points: null, explanation: "Deserts are defined by dryness, not heat — Antarctica’s polar desert is the largest. The Sahara is the largest hot desert." },
+];
+
+export function demoQuiz(): QuizData {
+  return buildQuizData(DEMO_ROWS, 0, "Arena Demo Set");
+}
