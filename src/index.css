@@ -1,10 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Metropolis:wght@400;500;600;700;800&family=Golden+Times:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Metropolis", "Proxima Nova", system-ui, sans-serif;
-  --font-golden: "Golden Times", serif;
-  --font-sans: "Metropolis", system-ui, sans-serif;
+  --font-display: "Proxima Nova", "Proxima Nova Bold", "Montserrat", system-ui, sans-serif;
+  --font-sans: "Proxima Nova", "Montserrat", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
   --color-ink: #07070a;
@@ -110,6 +109,13 @@ body {
 /* ---------- marquee ---------- */
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .animate-marquee { animation: marquee 30s linear infinite; }
+
+/* ---------- question / answer type: Proxima Nova Bold ---------- */
+.type-qa {
+  font-family: "Proxima Nova", "Montserrat", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
 
 /* ---------- outline text ---------- */
 .text-outline {

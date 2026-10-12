@@ -291,51 +291,85 @@ export default function HostGame({
 
               {/* the question — fills the stage */}
               <h2
-                className="mt-6 w-full max-w-6xl font-display font-bold leading-[1.1] tracking-tight text-paper md:mt-10"
+                className="type-qa mt-6 w-full max-w-6xl leading-[1.1] text-paper md:mt-10"
                 style={{ fontSize: "clamp(2.4rem, 6vw, 4.75rem)" }}
               >
                 {question.text}
               </h2>
 
-              {/* MCQ options (quiet, display-only) */}
+              {/* MCQ options — on reveal only the correct one remains, zoomed & centered */}
               {!isOpen && (
-                <div className="mt-8 grid w-full max-w-5xl gap-3 sm:grid-cols-2 md:mt-12 md:gap-4">
-                  {question.options.map((opt, i) => {
-                    const isCorrect = i === question.answerIndex;
-                    const revealed = qState === "revealed";
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 14 }}
-                        animate={{
-                          opacity: revealed && !isCorrect ? 0.12 : 1,
-                          y: 0,
-                          scale: revealed && isCorrect ? 1.07 : 1,
-                          filter: revealed && !isCorrect ? "blur(1.5px)" : "blur(0px)",
-                        }}
-                        transition={{ duration: 0.5, delay: revealed ? 0 : 0.12 + i * 0.05, ease }}
-                        className={cn(
-                          "flex items-center gap-4 rounded-xl border px-5 py-4 text-left transition-all duration-300 md:px-6 md:py-5",
-                          revealed && isCorrect && "glass-col !border-lime/70 shadow-[0_0_50px_rgba(184,255,60,0.3)]",
-                          revealed && !isCorrect && "glass",
-                          !revealed && "glass"
-                        )}
-                      >
-                        <span
+                <div
+                  className={cn(
+                    "mt-8 grid w-full gap-3 md:mt-12 md:gap-4",
+                    qState === "revealed"
+                      ? "max-w-3xl grid-cols-1 place-items-center"
+                      : "max-w-5xl sm:grid-cols-2"
+                  )}
+                >
+                  <AnimatePresence mode="popLayout">
+                    {question.options.map((opt, i) => {
+                      const isCorrect = i === question.answerIndex;
+                      const revealed = qState === "revealed";
+                      if (revealed && !isCorrect) return null;
+                      return (
+                        <motion.div
+                          key={i}
+                          layout
+                          initial={{ opacity: 0, y: 14 }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                            scale: revealed && isCorrect ? 1.12 : 1,
+                          }}
+                          exit={{ opacity: 0, scale: 0.88, filter: "blur(6px)", transition: { duration: 0.35, ease } }}
+                          transition={{
+                            duration: revealed ? 0.6 : 0.4,
+                            delay: revealed ? 0.12 : 0.12 + i * 0.05,
+                            ease,
+                          }}
                           className={cn(
-                            "grid h-10 w-10 shrink-0 place-items-center rounded-lg font-mono text-base font-bold md:h-12 md:w-12 md:text-lg transition-all",
-                            revealed && isCorrect ? "bg-lime text-ink shadow-[0_0_20px_rgba(184,255,60,0.5)]" : "bg-white/5 text-fog"
+                            "relative flex items-center gap-4 rounded-2xl border text-left transition-colors duration-300",
+                            revealed && isCorrect
+                              ? "glass-col !border-lime/70 w-full justify-center px-8 py-7 shadow-[0_0_70px_rgba(184,255,60,0.35)] md:px-10 md:py-9"
+                              : "glass px-5 py-4 md:px-6 md:py-5"
                           )}
                         >
-                          {revealed && isCorrect ? <Check className="h-5 w-5" strokeWidth={3} /> : LETTERS[i]}
-                        </span>
-                        <span className={cn("font-medium leading-snug transition-colors", revealed && isCorrect ? "text-paper" : "text-paper/75")}
-                          style={{ fontSize: "clamp(1rem, 1.8vw, 1.45rem)" }}>
-                          {opt}
-                        </span>
-                      </motion.div>
-                    );
-                  })}
+                          {/* check badge — upper-left corner, letter stays intact */}
+                          {revealed && isCorrect && (
+                            <motion.span
+                              initial={{ scale: 0, rotate: -40 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{ duration: 0.45, delay: 0.45, ease }}
+                              className="absolute -left-3 -top-3 grid h-9 w-9 place-items-center rounded-full bg-lime text-ink shadow-[0_0_24px_rgba(184,255,60,0.7)] md:-left-4 md:-top-4 md:h-11 md:w-11"
+                            >
+                              <Check className="h-5 w-5 md:h-6 md:w-6" strokeWidth={3.5} />
+                            </motion.span>
+                          )}
+                          <span
+                            className={cn(
+                              "grid shrink-0 place-items-center rounded-lg font-mono font-bold transition-all",
+                              revealed && isCorrect
+                                ? "h-12 w-12 bg-lime text-ink text-xl md:h-14 md:w-14 md:text-2xl"
+                                : "h-10 w-10 bg-white/5 text-fog text-base md:h-12 md:w-12 md:text-lg"
+                            )}
+                          >
+                            {LETTERS[i]}
+                          </span>
+                          <span
+                            className={cn("type-qa leading-snug", revealed && isCorrect ? "text-paper" : "text-paper/75")}
+                            style={{
+                              fontSize: revealed && isCorrect
+                                ? "clamp(1.5rem, 3vw, 2.5rem)"
+                                : "clamp(1rem, 1.8vw, 1.45rem)",
+                            }}
+                          >
+                            {opt}
+                          </span>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -386,8 +420,8 @@ export default function HostGame({
                     >
                       <p className="font-mono text-[11px] tracking-[0.4em] text-fog md:text-[12px]">THE ANSWER IS</p>
                       <p
-                        className="mt-4 font-extrabold text-lime"
-                        style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(2.5rem, 7vw, 5.75rem)", fontWeight: 800, lineHeight: 1.03 }}
+                        className="type-qa mt-4 text-lime"
+                        style={{ fontSize: "clamp(2.5rem, 7vw, 5.75rem)", fontWeight: 800, lineHeight: 1.03 }}
                       >
                         {question.answerText}
                       </p>

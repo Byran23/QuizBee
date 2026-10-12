@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, X, Check, Clock, Lightbulb, ChevronRight, Volume2, VolumeX, LogOut, Eye,
 } from "lucide-react";
+// note: X still used in the open-answer "MISSED IT" button
 import { cn } from "../utils/cn";
 import { QuizRound, AnswerRecord } from "../lib/types";
 import { sfx, setMuted, isMuted } from "../lib/sound";
@@ -86,7 +87,7 @@ export default function QuizScreen({
       const left = Math.max(0, round.def.seconds - elapsed);
       const correct = idx !== null && idx === question.answerIndex;
       if (correct) sfx.correct();
-      else sfx.wrong();
+      else if (!to) sfx.wrong(); // time-up already plays its own buzzer — don't stack sounds
       setSelected(idx);
       setTimedOut(to);
       setPhase("revealed");
@@ -274,7 +275,7 @@ export default function QuizScreen({
                   <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""}</span>
                   {isOpen && <span className="ml-2 rounded bg-white/5 px-1.5 py-0.5 text-violet">OPEN</span>}
                 </p>
-                <h2 className="mt-3 font-bold leading-snug tracking-tight text-paper" style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(1.65rem, 3.1vw, 2.75rem)" }}>
+                <h2 className="type-qa mt-3 leading-snug text-paper" style={{ fontSize: "clamp(1.65rem, 3.1vw, 2.75rem)" }}>
                   {question.text}
                 </h2>
               </div>
@@ -301,46 +302,78 @@ export default function QuizScreen({
               </div>
             </div>
 
-            {/* ============ MCQ options ============ */}
+            {/* ============ MCQ options — on reveal only the correct one remains, zoomed & centered ============ */}
             {!isOpen && (
-              <div className="mt-8 grid gap-3 md:grid-cols-2">
-                {question.options.map((opt, i) => {
-                  const isCorrect = i === question.answerIndex;
-                  const isSelected = i === selected;
-                  const revealed = phase === "revealed";
-                  return (
-                    <motion.button
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.45, delay: 0.15 + i * 0.07, ease }}
-                      onClick={() => { if (phase === "answering") { sfx.select(); lock(i); } }}
-                      disabled={phase !== "answering"}
-                      className={cn(
-                        "glass group relative flex items-center gap-4 rounded-2xl p-4 text-left transition-all duration-300 md:p-5",
-                        phase === "answering" && "sheen hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99]",
-                        revealed && isCorrect && "!border-lime/60 bg-lime/10 shadow-[0_0_30px_rgba(184,255,60,0.15)]",
-                        revealed && isSelected && !isCorrect && "!border-rose/60 bg-rose/10",
-                        revealed && !isCorrect && !isSelected && "opacity-40"
-                      )}
-                    >
-                      <span
+              <div
+                className={cn(
+                  "mt-8 grid w-full gap-3",
+                  phase === "revealed"
+                    ? "mx-auto max-w-2xl grid-cols-1 place-items-center"
+                    : "md:grid-cols-2"
+                )}
+              >
+                <AnimatePresence mode="popLayout">
+                  {question.options.map((opt, i) => {
+                    const isCorrect = i === question.answerIndex;
+                    const revealed = phase === "revealed";
+                    if (revealed && !isCorrect) return null;
+                    return (
+                      <motion.button
+                        key={i}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          scale: revealed && isCorrect ? 1.1 : 1,
+                        }}
+                        exit={{ opacity: 0, scale: 0.85, filter: "blur(6px)", transition: { duration: 0.3, ease } }}
+                        transition={{
+                          duration: revealed ? 0.55 : 0.45,
+                          delay: revealed ? 0.12 : 0.15 + i * 0.07,
+                          ease,
+                        }}
+                        onClick={() => { if (phase === "answering") { sfx.select(); lock(i); } }}
+                        disabled={phase !== "answering"}
                         className={cn(
-                          "grid h-9 w-9 shrink-0 place-items-center rounded-lg font-mono text-sm font-bold transition-colors",
-                          phase === "answering" && "bg-white/5 text-fog group-hover:bg-white/10 group-hover:text-paper",
-                          revealed && isCorrect && "bg-lime text-ink",
-                          revealed && isSelected && !isCorrect && "bg-rose text-ink",
-                          revealed && !isCorrect && !isSelected && "bg-white/5 text-fog"
+                          "relative flex items-center gap-4 rounded-2xl border text-left transition-colors duration-300",
+                          phase === "answering" &&
+                            "glass group sheen px-4 py-4 hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99] md:px-5 md:py-5",
+                          revealed && isCorrect &&
+                            "glass-col !border-lime/70 w-full justify-center px-7 py-6 shadow-[0_0_60px_rgba(184,255,60,0.3)]"
                         )}
                       >
-                        {revealed && isCorrect ? <Check className="h-4 w-4" strokeWidth={3} /> :
-                         revealed && isSelected && !isCorrect ? <X className="h-4 w-4" strokeWidth={3} /> :
-                         letters[i]}
-                      </span>
-                      <span className="text-[15px] font-medium leading-snug text-paper/85">{opt}</span>
-                    </motion.button>
-                  );
-                })}
+                        {/* check badge — upper-left corner; letter always stays */}
+                        {revealed && isCorrect && (
+                          <motion.span
+                            initial={{ scale: 0, rotate: -40 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ duration: 0.42, delay: 0.42, ease }}
+                            className="absolute -left-3 -top-3 z-10 grid h-8 w-8 place-items-center rounded-full bg-lime text-ink shadow-[0_0_22px_rgba(184,255,60,0.75)]"
+                          >
+                            <Check className="h-4 w-4" strokeWidth={3.5} />
+                          </motion.span>
+                        )}
+                        <span
+                          className={cn(
+                            "grid shrink-0 place-items-center rounded-lg font-mono font-bold transition-all",
+                            revealed && isCorrect
+                              ? "h-12 w-12 bg-lime text-ink text-lg"
+                              : "h-9 w-9 bg-white/5 text-fog text-sm group-hover:bg-white/10 group-hover:text-paper"
+                          )}
+                        >
+                          {letters[i]}
+                        </span>
+                        <span
+                          className={cn("type-qa leading-snug", revealed && isCorrect ? "text-paper" : "text-paper/85")}
+                          style={{ fontSize: revealed && isCorrect ? "clamp(1.25rem, 2.4vw, 1.9rem)" : "0.95rem" }}
+                        >
+                          {opt}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
             )}
 
@@ -371,7 +404,7 @@ export default function QuizScreen({
                 className="glass-col !border-lime/40 mt-8 rounded-3xl p-6 text-center md:p-8"
               >
                 <p className="font-mono text-[10px] tracking-[0.4em] text-fog">THE ANSWER IS</p>
-                <p className="mt-3 font-extrabold text-lime md:text-4xl" style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(1.9rem, 3.4vw, 2.6rem)", fontWeight: 800 }}>
+                <p className="type-qa mt-3 text-lime" style={{ fontSize: "clamp(1.9rem, 3.4vw, 2.6rem)", fontWeight: 800 }}>
                   {question.answerText}
                 </p>
                 <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">

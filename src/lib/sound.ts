@@ -61,12 +61,14 @@ export const sfx = {
     tone(147, 0.12, 0.3, "sawtooth", 0.07, 98);
   },
   timeUp() {
-    // klaxon: 3 sharp descending square blasts
-    [880, 738, 622].forEach((f, i) => {
-      tone(f, i * 0.16, 0.13, "square", 0.11);
-      tone(f / 2, i * 0.16, 0.13, "sawtooth", 0.045);
-    });
-    tone(494, 0.48, 0.5, "sawtooth", 0.09, 392);
+    // game-show buzzer: harsh low double-blat + dying siren fall
+    tone(165, 0, 0.42, "sawtooth", 0.13);
+    tone(110, 0, 0.42, "square", 0.1);
+    tone(164, 0.012, 0.42, "sawtooth", 0.1); // detune for the "grind"
+    tone(165, 0.52, 0.6, "sawtooth", 0.13);
+    tone(110, 0.52, 0.6, "square", 0.1);
+    tone(164, 0.532, 0.6, "sawtooth", 0.1);
+    tone(330, 1.18, 0.75, "sawtooth", 0.07, 98); // siren wind-down
   },
   advance() {
     tone(392, 0, 0.06, "sine", 0.07, 523);
