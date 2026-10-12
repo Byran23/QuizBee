@@ -60,7 +60,7 @@ export default function HostGame({
       }
       if (next <= 0) {
         clearInterval(iv);
-        sfx.wrong(); // time-up buzz, answer still hidden until host reveals
+        sfx.timeUp(); // klaxon — answer still hidden until host reveals
       }
     }, 100);
     return () => clearInterval(iv);
@@ -291,8 +291,8 @@ export default function HostGame({
 
               {/* the question — fills the stage */}
               <h2
-                className="mt-6 w-full max-w-5xl font-display font-bold leading-[1.12] tracking-tight text-paper md:mt-10"
-                style={{ fontSize: "clamp(1.9rem, 4.6vw, 3.75rem)" }}
+                className="mt-6 w-full max-w-6xl font-display font-bold leading-[1.1] tracking-tight text-paper md:mt-10"
+                style={{ fontSize: "clamp(2.4rem, 6vw, 4.75rem)" }}
               >
                 {question.text}
               </h2>
@@ -307,24 +307,30 @@ export default function HostGame({
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 14 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.12 + i * 0.05, ease }}
+                        animate={{
+                          opacity: revealed && !isCorrect ? 0.12 : 1,
+                          y: 0,
+                          scale: revealed && isCorrect ? 1.07 : 1,
+                          filter: revealed && !isCorrect ? "blur(1.5px)" : "blur(0px)",
+                        }}
+                        transition={{ duration: 0.5, delay: revealed ? 0 : 0.12 + i * 0.05, ease }}
                         className={cn(
                           "flex items-center gap-4 rounded-xl border px-5 py-4 text-left transition-all duration-300 md:px-6 md:py-5",
-                          revealed && isCorrect && "glass-col !border-lime/60 shadow-[0_0_40px_rgba(184,255,60,0.2)]",
-                          revealed && !isCorrect && "glass opacity-30",
+                          revealed && isCorrect && "glass-col !border-lime/70 shadow-[0_0_50px_rgba(184,255,60,0.3)]",
+                          revealed && !isCorrect && "glass",
                           !revealed && "glass"
                         )}
                       >
                         <span
                           className={cn(
-                            "grid h-10 w-10 shrink-0 place-items-center rounded-lg font-mono text-base font-bold md:h-12 md:w-12 md:text-lg",
-                            revealed && isCorrect ? "bg-lime text-ink" : "bg-white/5 text-fog"
+                            "grid h-10 w-10 shrink-0 place-items-center rounded-lg font-mono text-base font-bold md:h-12 md:w-12 md:text-lg transition-all",
+                            revealed && isCorrect ? "bg-lime text-ink shadow-[0_0_20px_rgba(184,255,60,0.5)]" : "bg-white/5 text-fog"
                           )}
                         >
                           {revealed && isCorrect ? <Check className="h-5 w-5" strokeWidth={3} /> : LETTERS[i]}
                         </span>
-                        <span className={cn("text-base font-medium leading-snug md:text-xl", revealed && isCorrect ? "text-paper" : "text-paper/75")}>
+                        <span className={cn("font-medium leading-snug transition-colors", revealed && isCorrect ? "text-paper" : "text-paper/75")}
+                          style={{ fontSize: "clamp(1rem, 1.8vw, 1.45rem)" }}>
                           {opt}
                         </span>
                       </motion.div>
@@ -374,11 +380,14 @@ export default function HostGame({
                   className="mt-8 flex w-full max-w-6xl flex-1 flex-col items-center justify-center md:mt-10"
                 >
                   {isOpen && (
-                    <div className="glass-col !border-lime/40 w-full max-w-4xl rounded-3xl px-6 py-7 md:py-9">
+                    <div
+                      className="glass-col !border-lime/40 w-full max-w-4xl rounded-3xl px-6 py-7 md:py-9"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
                       <p className="font-mono text-[11px] tracking-[0.4em] text-fog md:text-[12px]">THE ANSWER IS</p>
                       <p
-                        className="mt-4 font-display font-extrabold text-lime"
-                        style={{ fontSize: "clamp(2rem, 5.5vw, 4.5rem)", fontWeight: 800, lineHeight: 1.05 }}
+                        className="mt-4 font-extrabold text-lime"
+                        style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(2.5rem, 7vw, 5.75rem)", fontWeight: 800, lineHeight: 1.03 }}
                       >
                         {question.answerText}
                       </p>

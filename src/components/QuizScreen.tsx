@@ -63,6 +63,7 @@ export default function QuizScreen({
       }
       if (next <= 0) {
         clearInterval(iv);
+        sfx.timeUp();
         if (isOpen) enterCheck(true);
         else lock(null, true);
       }
@@ -273,7 +274,7 @@ export default function QuizScreen({
                   <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""}</span>
                   {isOpen && <span className="ml-2 rounded bg-white/5 px-1.5 py-0.5 text-violet">OPEN</span>}
                 </p>
-                <h2 className="mt-3 font-display text-2xl font-bold leading-snug tracking-tight text-paper md:text-4xl">
+                <h2 className="mt-3 font-bold leading-snug tracking-tight text-paper" style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(1.65rem, 3.1vw, 2.75rem)" }}>
                   {question.text}
                 </h2>
               </div>
@@ -370,7 +371,7 @@ export default function QuizScreen({
                 className="glass-col !border-lime/40 mt-8 rounded-3xl p-6 text-center md:p-8"
               >
                 <p className="font-mono text-[10px] tracking-[0.4em] text-fog">THE ANSWER IS</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-lime md:text-4xl" style={{ fontWeight: 800 }}>
+                <p className="mt-3 font-extrabold text-lime md:text-4xl" style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(1.9rem, 3.4vw, 2.6rem)", fontWeight: 800 }}>
                   {question.answerText}
                 </p>
                 <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -60,6 +60,14 @@ export const sfx = {
     tone(196, 0, 0.22, "sawtooth", 0.07, 120);
     tone(147, 0.12, 0.3, "sawtooth", 0.07, 98);
   },
+  timeUp() {
+    // klaxon: 3 sharp descending square blasts
+    [880, 738, 622].forEach((f, i) => {
+      tone(f, i * 0.16, 0.13, "square", 0.11);
+      tone(f / 2, i * 0.16, 0.13, "sawtooth", 0.045);
+    });
+    tone(494, 0.48, 0.5, "sawtooth", 0.09, 392);
+  },
   advance() {
     tone(392, 0, 0.06, "sine", 0.07, 523);
   },
