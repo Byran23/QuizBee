@@ -13,6 +13,8 @@ import { AnswerRecord, AwardEvent, Contestant, FetchResult, QuizMode, TeamScore 
 import { recomputeTotals } from "./lib/sheets";
 import { sfx } from "./lib/sound";
 import FullscreenToggle from "./components/FullscreenToggle";
+import ThemePanel from "./components/ThemePanel";
+import { ThemeState, loadTheme, saveTheme, resolvePalette, applyPalette } from "./lib/theme";
 
 type View =
   | "setup" | "briefing" | "round-intro" | "quiz" | "results"
@@ -34,6 +36,28 @@ export default function App() {
   /* contest state */
   const [teams, setTeams] = useState<Contestant[]>([]);
   const [awards, setAwards] = useState<AwardEvent[]>([]);
+
+  /* theme */
+  const [theme, setTheme] = useState<ThemeState>(() => loadTheme());
+  const [themeOpen, setThemeOpen] = useState(false);
+  const palette = useMemo(() => resolvePalette(theme), [theme]);
+
+  useEffect(() => {
+    applyPalette(palette);
+  }, [palette]);
+
+  // never let the theme window overlap the live show
+  useEffect(() => {
+    setThemeOpen(false);
+  }, [view]);
+
+  const updateTheme = useCallback((patch: Partial<ThemeState>) => {
+    setTheme((t) => {
+      const next = { ...t, ...patch };
+      saveTheme(next);
+      return next;
+    });
+  }, []);
 
   const resetSolo = useCallback(() => {
     setRoundIndex(0);
@@ -137,13 +161,13 @@ export default function App() {
   }, [teams, awards, result]);
 
   const accent = useMemo(() => {
-    if (!result) return "#B8FF3C";
+    if (!result) return palette.accent;
     if (view === "quiz" || view === "round-intro" || view === "contest-play")
-      return result.data.rounds[roundIndex]?.def.color ?? "#B8FF3C";
-    if (view === "contestants") return "#5CD2FF";
-    if (view === "standings" || view === "podium") return "#FFB84D";
-    return "#B8FF3C";
-  }, [view, result, roundIndex]);
+      return result.data.rounds[roundIndex]?.def.color ?? palette.accent;
+    if (view === "contestants") return palette.secondary;
+    if (view === "standings" || view === "podium") return palette.warn;
+    return palette.accent;
+  }, [view, result, roundIndex, palette]);
 
   const handleUpdateRound = useCallback((roundKey: string, patch: { points?: number; seconds?: number }) => {
     setResult((prev) => {
@@ -164,13 +188,25 @@ export default function App() {
 
   return (
     <div className="grain relative min-h-screen">
-      <Backdrop accent={accent} />
+      <Backdrop
+        accent={accent}
+        bgImage={theme.bgImage}
+        bgDim={theme.bgDim}
+        bgBlur={theme.bgBlur}
+      />
       <FullscreenToggle />
+      <ThemePanel
+        theme={theme}
+        onChange={updateTheme}
+        open={themeOpen}
+        onOpenChange={setThemeOpen}
+        showLauncher={view !== "setup"}
+      />
 
       <AnimatePresence mode="wait">
         {view === "setup" && (
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <SetupScreen onReady={handleReady} />
+            <SetupScreen onReady={handleReady} onCustomize={() => setThemeOpen((v) => !v)} />
           </motion.div>
         )}
 

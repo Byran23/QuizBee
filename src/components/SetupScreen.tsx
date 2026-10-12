@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sheet, Link2, Sparkles, AlertTriangle, Loader2, ClipboardPaste,
+  Link2, Sparkles, AlertTriangle, Loader2, ClipboardPaste,
   ChevronDown, Copy, Check, TableProperties, Clock3, Layers3,
-  ListTodo, ArrowRight, History, X,
+  ListTodo, ArrowRight, History, X, Palette as PaletteIcon,
 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { parseSheetInput, fetchQuizFromSheet, SheetFetchError } from "../lib/sheets";
@@ -12,6 +12,7 @@ import { FetchResult } from "../lib/types";
 
 interface Props {
   onReady: (result: FetchResult, url: string | null) => void;
+  onCustomize: () => void;
 }
 
 const RECENT_KEY = "quizbee.recents";
@@ -23,7 +24,7 @@ What is the escape velocity of Earth?,7.9 km/s,9.8 km/s,11.2 km/s,42.1 km/s,11.2
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-export default function SetupScreen({ onReady }: Props) {
+export default function SetupScreen({ onReady, onCustomize }: Props) {
   const [url, setUrl] = useState("");
   const [tab, setTab] = useState("");
   const [showTab, setShowTab] = useState(false);
@@ -84,15 +85,13 @@ export default function SetupScreen({ onReady }: Props) {
             Q-BEE ARENA
           </span>
         </div>
-        <a
-          href="https://docs.new"
-          target="_blank"
-          rel="noreferrer"
-          className="group flex items-center gap-2 rounded-full border border-line px-4 py-2 font-mono text-[11px] tracking-wider text-fog transition hover:border-lime/50 hover:text-paper"
+        <button
+          onClick={onCustomize}
+          className="glass group flex items-center gap-2 rounded-full px-4 py-2 font-mono text-[11px] tracking-wider text-fog transition hover:border-lime/50 hover:text-paper"
         >
-          <Sheet className="h-3.5 w-3.5 text-lime" />
-          NEW SHEET
-        </a>
+          <PaletteIcon className="h-3.5 w-3.5 text-lime transition-transform group-hover:rotate-12" />
+          CUSTOMIZE
+        </button>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 pb-24">

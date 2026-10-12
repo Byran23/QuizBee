@@ -1,7 +1,14 @@
 import { useEffect, useRef } from "react";
 
-/** Fixed ambient backdrop: two large colored orbs + pointer glow, all behind glass. */
-export default function Backdrop({ accent = "#B8FF3C" }: { accent?: string }) {
+interface BackdropProps {
+  accent?: string;
+  bgImage?: string | null;
+  bgDim?: number;
+  bgBlur?: number;
+}
+
+/** Fixed ambient backdrop: optional photo + colored orbs + pointer glow, all behind glass. */
+export default function Backdrop({ accent = "#B8FF3C", bgImage = null, bgDim = 55, bgBlur = 4 }: BackdropProps) {
   const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,6 +30,20 @@ export default function Backdrop({ accent = "#B8FF3C" }: { accent?: string }) {
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden bg-ink" aria-hidden>
+      {/* uploaded photo */}
+      {bgImage && (
+        <>
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${bgImage})`,
+              filter: `blur(${bgBlur}px)`,
+              transform: "scale(1.06)", // hide blur edges
+            }}
+          />
+          <div className="absolute inset-0 bg-ink" style={{ opacity: bgDim / 100 }} />
+        </>
+      )}
       {/* accent orb */}
       <div
         className="animate-float-slow absolute -top-52 -right-52 h-[42rem] w-[42rem] rounded-full opacity-[0.22] blur-[130px]"

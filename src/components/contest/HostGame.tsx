@@ -60,7 +60,7 @@ export default function HostGame({
       }
       if (next <= 0) {
         clearInterval(iv);
-        sfx.timeUp(); // klaxon — answer still hidden until host reveals
+        sfx.timeUp(); // single bell — answer still hidden until host reveals
       }
     }, 100);
     return () => clearInterval(iv);

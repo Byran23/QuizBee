@@ -81,10 +81,8 @@ export const sfx = {
     tone(147, 0.12, 0.3, "sawtooth", 0.07, 98);
   },
   timeUp() {
-    // time-up bell: three clear rings (additive partials = real bell timbre)
-    bell(1318.5, 0); // E6
-    bell(1318.5, 0.55);
-    bell(1046.5, 1.1, 2.2, 0.15); // C6 — slower final toll
+    // time-up bell: a single clear ring with a long tail
+    bell(1318.5, 0, 2.6, 0.16); // E6
   },
   advance() {
     tone(392, 0, 0.06, "sine", 0.07, 523);
