@@ -190,10 +190,37 @@ const MATCHERS = {
   round: /^(round|difficulty|level|category|type|stage|group|section)$/i,
   points: /^(points|pts|score|value|weight)$/i,
   explanation: /^(explanation|why|explain|solutiontext|note|notes|rationale|hint)$/i,
+  image: /^(image|imageurl|img|imgurl|picture|pictureurl|photo|photourl|imagelink)$/i,
   optionsCombined: /^(options|choices|choiceslist)$/i,
   optionIndexed: /^([a-f])$/i,
   optionLong: /^(option|choice|choice|opt|a)([a-f]|[1-6])$/i,
 };
+
+/** Normalize an image cell into a displayable URL (handles =IMAGE() + Drive share links). */
+export function normalizeImageUrl(raw: string): string | undefined {
+  let s = raw.trim();
+  if (!s) return undefined;
+  // =IMAGE("https://...") formula → extract inner URL
+  const formula = s.match(/=IMAGE\s*\(\s*"([^"]+)"/i) || s.match(/=IMAGE\s*\(\s*'([^']+)'/i);
+  if (formula) s = formula[1].trim();
+  // strip surrounding quotes
+  s = s.replace(/^["']|["']$/g, "").trim();
+  if (!s) return undefined;
+  // Google Drive share link → direct image
+  const driveId = s.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^#]*[?&]id=)([a-zA-Z0-9_-]+)/)?.[1]
+    || (s.match(/^[a-zA-Z0-9_-]{25,}$/) && s.length < 60 ? s : null);
+  if (driveId && (s.includes("drive.google.com") || /^[a-zA-Z0-9_-]{25,}$/.test(s))) {
+    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
+  }
+  // Dropbox share → direct
+  if (s.includes("dropbox.com")) {
+    s = s.replace(/([?&])dl=0/, "$1raw=1");
+    if (!s.includes("raw=1")) s += (s.includes("?") ? "&" : "?") + "raw=1";
+    return s;
+  }
+  if (/^https?:\/\//i.test(s)) return s;
+  return undefined;
+}
 
 function letterColIndex(header: string): number | null {
   const h = norm(header);
@@ -248,6 +275,7 @@ interface RawRow {
   round: string;
   points: number | null;
   explanation: string;
+  image?: string;
 }
 
 export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
@@ -261,6 +289,7 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
     else if (MATCHERS.round.test(h)) col.round = i;
     else if (MATCHERS.points.test(h) && col.points === undefined) col.points = i;
     else if (MATCHERS.explanation.test(h)) col.explanation = i;
+    else if (MATCHERS.image.test(h)) col.image = i;
     else if (MATCHERS.optionsCombined.test(h)) col.options = i;
     else {
       const li = letterColIndex(h);
@@ -280,11 +309,14 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
   for (let r = 1; r < rows.length; r++) {
     const cells = rows[r];
     const get = (i: number | undefined) => (i === undefined ? "" : cells[i] ?? "");
-    const question = get(col.question).trim();
-    if (!question) {
+    let question = get(col.question).trim();
+    const image = normalizeImageUrl(get(col.image));
+    if (!question && !image) {
       skipped++;
       continue;
     }
+    // image-only row → sensible default prompt
+    if (!question && image) question = "What is shown in the image?";
     let options: string[] = [];
     if (optionCols.length >= 2) {
       options = optionCols
@@ -310,6 +342,7 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
       round: get(col.round).trim(),
       points: Number.isFinite(ptsParsed) && ptsParsed > 0 ? ptsParsed : null,
       explanation: get(col.explanation).trim(),
+      image,
     });
   }
 
@@ -377,6 +410,7 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
       round: r.round,
       points: r.points ?? 0, // 0 => use round default
       explanation: r.explanation || undefined,
+      image: r.image,
     });
   });
 

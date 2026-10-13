@@ -9,6 +9,7 @@ import { QuizRound, TeamScore } from "../../lib/types";
 import { sfx, setMuted, isMuted } from "../../lib/sound";
 import RankBadge from "../RankBadge";
 import AutoFitText from "../AutoFitText";
+import QuestionImage from "../QuestionImage";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -41,9 +42,11 @@ export default function HostGame({
   const question = round.questions[Math.min(qIndex, round.questions.length - 1)];
   const isOpen = question.kind === "open";
   const pointsFor = question.points > 0 ? question.points : round.def.points;
-  const ordered = [...teams].sort((a, b) => a.contestant.seat - b.contestant.seat);
-  // live leaderboard: highest score first, re-orders as points are awarded
-  const rankedDisplay = [...ordered].sort((a, b) => b.total - a.total || a.contestant.seat - b.contestant.seat);
+  // live standings: highest score first, ties broken by seat — re-sorts on every award
+  const ordered = [...teams].sort(
+    (a, b) => b.total - a.total || a.contestant.seat - b.contestant.seat
+  );
+  const bySeat = (seat: number) => teams.find((t) => t.contestant.seat === seat);
   const timeUp = left <= 0;
 
   /* ---------- timer: runs only while live ---------- */
@@ -120,8 +123,7 @@ export default function HostGame({
       if (qState === "revealed") {
         const n = parseInt(e.key);
         if (n >= 1 && n <= 9) {
-          // hotkeys follow seat numbers (stable) even while display re-sorts by score
-          const t = ordered.find((x) => x.contestant.seat === n);
+          const t = bySeat(n); // hotkeys follow fixed seat numbers, not rank position
           if (t) toggleAward(t.contestant.id);
         } else if (e.key.toLowerCase() === "c") {
           setAwardSet([]);
@@ -131,7 +133,7 @@ export default function HostGame({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roundDone, qState, reveal, showAnswer, confirmNext, toggleAward, ordered.length]);
+  }, [roundDone, qState, reveal, showAnswer, confirmNext, toggleAward, teams]);
 
   /* ---------- derived ---------- */
   const frac = left / round.def.seconds;
@@ -198,14 +200,14 @@ export default function HostGame({
         className="w-full"
       >
       <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(138px,1fr))] gap-2 px-4 md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:px-8">
-        {rankedDisplay.map((t) => {
+        {ordered.map((t) => {
           const inAward = awardSet.includes(t.contestant.id);
           const interactive = qState === "revealed";
           return (
             <motion.button
               key={t.contestant.id}
               layout
-              transition={{ duration: 0.5, ease }}
+              transition={{ duration: 0.55, ease }}
               onClick={() => interactive && toggleAward(t.contestant.id)}
               disabled={!interactive}
               className={cn(
@@ -228,13 +230,22 @@ export default function HostGame({
                 className="h-2 w-2 shrink-0 rounded-full"
                 style={{ background: t.contestant.color, boxShadow: `0 0 8px ${t.contestant.glow}` }}
               />
-              <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper md:text-[13px]">
-                {t.contestant.seat <= 9 && (
-                  <span className="mr-1.5 rounded bg-white/10 px-1 py-0.5 font-mono text-[9px] text-fog">{t.contestant.seat}</span>
-                )}
-                {t.contestant.name}
-              </span>
-              <span className="font-mono text-[13px] font-bold tabular-nums md:text-[15px]" style={{ color: t.contestant.color }}>{t.total}</span>
+              <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper md:text-[13px]">{t.contestant.name}</span>
+              {t.contestant.seat <= 9 && (
+                <span className="hidden shrink-0 rounded bg-white/[0.07] px-1.5 py-0.5 font-mono text-[9px] font-bold text-fog/70 sm:block" title={`Press ${t.contestant.seat} to toggle award`}>
+                  {t.contestant.seat}
+                </span>
+              )}
+              <motion.span
+                key={t.total}
+                initial={{ scale: 1.45, opacity: 0.4 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.35, ease }}
+                className="font-mono text-[13px] font-bold tabular-nums md:text-[15px]"
+                style={{ color: t.contestant.color }}
+              >
+                {t.total}
+              </motion.span>
               {inAward && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -268,6 +279,7 @@ export default function HostGame({
                 <span className="mx-2 text-white/20">|</span>
                 <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""} · {round.def.seconds}S</span>
                 {isOpen && <span className="ml-2 text-violet">· OPEN ANSWER</span>}
+                {question.image && <span className="ml-2 text-sky">· 🖼 IMAGE</span>}
               </span>
               <span className="mt-8 grid h-20 w-20 place-items-center rounded-2xl border border-line bg-ink text-fog transition group-hover:border-lime/50 group-hover:text-lime group-hover:shadow-[0_0_40px_rgba(184,255,60,0.25)] md:h-24 md:w-24">
                 <Eye className="h-9 w-9 md:h-11 md:w-11" />
@@ -321,10 +333,14 @@ export default function HostGame({
                 style={{
                   height:
                     qState === "revealed"
-                      ? "clamp(4rem, 11vh, 7.5rem)" // shrink to make room for the answer
-                      : isOpen
-                        ? "clamp(9rem, 32vh, 24rem)"
-                        : "clamp(8rem, 27vh, 19rem)",
+                      ? question.image
+                        ? "clamp(3rem, 8vh, 5.5rem)"
+                        : "clamp(4rem, 11vh, 7.5rem)" // shrink to make room for the answer
+                      : question.image
+                        ? "clamp(4rem, 12vh, 8rem)" // image takes the spotlight
+                        : isOpen
+                          ? "clamp(9rem, 32vh, 24rem)"
+                          : "clamp(8rem, 27vh, 19rem)",
                   transition: "height 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
                 }}
                 textClassName={cn(
@@ -332,6 +348,13 @@ export default function HostGame({
                   qState === "revealed" ? "text-paper/55" : "text-paper"
                 )}
               />
+
+              {/* guess-the-image */}
+              {question.image && (
+                <div className="mt-5 w-full md:mt-6">
+                  <QuestionImage src={question.image} alt={`Question ${qIndex + 1} image`} />
+                </div>
+              )}
 
               {/* MCQ options — on reveal only the correct one remains, zoomed & centered */}
               {!isOpen && (
@@ -494,6 +517,9 @@ export default function HostGame({
                           >
                             {inAward && <Check className="h-4 w-4" strokeWidth={3} />}
                             {t.contestant.name}
+                            <span className={cn("tabular-nums", inAward ? "opacity-70" : "text-fog/60")}>
+                              {t.total}
+                            </span>
                           </button>
                         );
                       })}

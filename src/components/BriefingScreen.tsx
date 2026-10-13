@@ -101,6 +101,11 @@ export default function BriefingScreen({ data, sourceUrl, via, onStart, onBack, 
         <span className="flex items-center gap-2 rounded-full border border-line px-4 py-2">
           <Timer className="h-3.5 w-3.5 text-sky" /> ~{mins} MIN RUN
         </span>
+        {data.rounds.some((r) => r.questions.some((q) => q.image)) && (
+          <span className="flex items-center gap-2 rounded-full border border-sky/40 bg-sky/10 px-4 py-2 text-sky">
+            🖼 {data.rounds.reduce((n, r) => n + r.questions.filter((q) => q.image).length, 0)} WITH IMAGES
+          </span>
+        )}
       </motion.div>
 
       {/* round cards */}

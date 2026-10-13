@@ -11,6 +11,8 @@ export interface Question {
   round: string;
   points: number;
   explanation?: string;
+  /** optional image to display with the question (guess-the-image) */
+  image?: string;
 }
 
 export interface RoundDef {

@@ -16,11 +16,11 @@ interface Props {
 }
 
 const RECENT_KEY = "quizbee.recents";
-const SAMPLE_CSV = `Question,A,B,C,D,Answer,Round,Explanation
-Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Mercury,B,Easy,Iron oxide dust covers its surface.
-What is 12 x 8?,88,96,104,112,96,Average,12 x 8 = 96.
-Who painted the Mona Lisa?,Michelangelo,Raphael,Leonardo da Vinci,Donatello,C,Difficult,Leonardo completed it in the early 1500s.
-What is the escape velocity of Earth?,7.9 km/s,9.8 km/s,11.2 km/s,42.1 km/s,11.2 km/s,Clincher,Ignoring atmospheric drag.`;
+const SAMPLE_CSV = `Question,A,B,C,D,Answer,Round,Image,Explanation
+Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Mercury,B,Easy,,Iron oxide dust covers its surface.
+What is 12 x 8?,88,96,104,112,96,Average,,12 x 8 = 96.
+What landmark is in the image?,Eiffel Tower,Big Ben,Statue of Liberty,Sydney Opera House,A,Average,https://images.pexels.com/photos/29667766/pexels-photo-29667766.jpeg,Eiffel Tower in Paris.
+What animal is in the image?,,,,,Philippine Tarsier,Difficult,https://images.pexels.com/photos/4086737/pexels-photo-4086737.jpeg,One of the world's smallest primates.`;
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -393,6 +393,7 @@ export default function SetupScreen({ onReady, onCustomize }: Props) {
                       ["Answer accepts a letter (B), a number (2), the exact option text — or any free text for open questions.", true],
                       ["Round groups questions: Easy 1pt · Average 2pts · Difficult 3pts · Clincher 5pts. Blank round = one general round.", true],
                       ["Optional Points column overrides scoring per question.", true],
+                      ["Optional Image column (Image / Picture / Photo) — paste a direct image URL or Google Drive share link for guess-the-image rounds. Works with MCQ and open questions.", true],
                       ["Optional Explanation shows after the answer reveal.", true],
                     ].map(([text], i) => (
                       <li key={i} className="flex gap-2.5">

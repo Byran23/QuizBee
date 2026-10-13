@@ -288,6 +288,14 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
                       )}>
                         {r.correct ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : r.timedOut ? <Minus className="h-3.5 w-3.5" strokeWidth={3} /> : <X className="h-3.5 w-3.5" strokeWidth={3} />}
                       </span>
+                      {r.question.image && (
+                        <img
+                          src={r.question.image}
+                          alt=""
+                          loading="lazy"
+                          className="mt-0.5 h-14 w-14 shrink-0 rounded-lg border border-line object-cover"
+                        />
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium leading-snug text-paper">{r.question.text}</p>
                         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11px]">

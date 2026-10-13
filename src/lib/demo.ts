@@ -6,6 +6,7 @@ const DEMO_ROWS = [
   { question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Mercury"], answerRaw: "B", round: "Easy", points: null, explanation: "Mars appears red because of iron oxide — rust — on its surface." },
   { question: "What is the chemical symbol for gold?", options: ["Ag", "Go", "Au", "Gd"], answerRaw: "Au", round: "Easy", points: null, explanation: "Au comes from the Latin word “aurum”, meaning shining dawn." },
   { question: "How many sides does a hexagon have?", options: ["5", "6", "7", "8"], answerRaw: "6", round: "Easy", points: null, explanation: "“Hexa” is Greek for six." },
+  { question: "What famous landmark is shown in the image?", options: ["Eiffel Tower", "Big Ben", "Statue of Liberty", "Sydney Opera House"], answerRaw: "A", round: "Easy", points: null, explanation: "The Eiffel Tower in Paris, France — completed in 1889.", image: "https://images.pexels.com/photos/29667766/pexels-photo-29667766.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
   // ---- AVERAGE (2 pts · 20s) ----
   { question: "Which scientist proposed the theory of general relativity?", options: ["Isaac Newton", "Niels Bohr", "Albert Einstein", "Max Planck"], answerRaw: "C", round: "Average", points: null, explanation: "Einstein published general relativity in 1915, redefining gravity as curved spacetime." },
   { question: "The Fibonacci sequence begins 0, 1, 1, 2, 3 — what comes next?", options: ["4", "5", "6", "8"], answerRaw: "5", round: "Average", points: null, explanation: "Each term is the sum of the two before it: 2 + 3 = 5." },
@@ -20,6 +21,7 @@ const DEMO_ROWS = [
   { question: "Which mathematical constant equals approximately 2.71828?", options: ["π (pi)", "φ (golden ratio)", "e (Euler’s number)", "γ (Euler–Mascheroni)"], answerRaw: "C", round: "Clincher", points: null, explanation: "Euler’s number e is the base of natural logarithms, central to growth and decay." },
   { question: "The Rosetta Stone was key to deciphering which writing system?", options: ["Cuneiform", "Mayan glyphs", "Linear B", "Egyptian hieroglyphs"], answerRaw: "D", round: "Clincher", points: null, explanation: "Decoded by Champollion in 1822, it carried the same decree in three scripts." },
   { question: "Name the largest desert on Earth.", options: [], answerRaw: "Antarctic Desert", round: "Clincher", points: null, explanation: "Deserts are defined by dryness, not heat — Antarctica’s polar desert is the largest. The Sahara is the largest hot desert." },
+  { question: "What animal is shown in the image?", options: [], answerRaw: "Philippine Tarsier", round: "Difficult", points: null, explanation: "The Philippine tarsier — one of the world's smallest primates, famous for its enormous eyes. An open image-guess question.", image: "https://images.pexels.com/photos/4086737/pexels-photo-4086737.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
 ];
 
 export function demoQuiz(): QuizData {
