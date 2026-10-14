@@ -19,11 +19,12 @@ interface Props {
 }
 
 const RECENT_KEY = "quizbee.recents";
-const SAMPLE_CSV = `Question,A,B,C,D,Answer,Round,Image,Explanation
-Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Mercury,B,Easy,,Iron oxide dust covers its surface.
-What is 12 x 8?,88,96,104,112,96,Average,,12 x 8 = 96.
-What landmark is in the image?,Eiffel Tower,Big Ben,Statue of Liberty,Sydney Opera House,A,Average,https://images.pexels.com/photos/29667766/pexels-photo-29667766.jpeg,Eiffel Tower in Paris.
-What animal is in the image?,,,,,Philippine Tarsier,Difficult,https://images.pexels.com/photos/4086737/pexels-photo-4086737.jpeg,One of the world's smallest primates.`;
+const SAMPLE_CSV = `Question,A,B,C,D,Answer,Round,Time,Image,Explanation
+Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Mercury,B,Easy,,,Iron oxide dust covers its surface.
+What is 12 x 8?,88,96,104,112,96,Average,,,12 x 8 = 96.
+Solve: a train travels 80 km/h for 3.75 hours. Distance?,260 km,280 km,300 km,320 km,C,Difficult,90,,Needs working time - 90s from the Time column.
+What landmark is in the image?,Eiffel Tower,Big Ben,Statue of Liberty,Sydney Opera House,A,Average,,https://images.pexels.com/photos/29667766/pexels-photo-29667766.jpeg,Eiffel Tower in Paris.
+What animal is in the image?,,,,,Philippine Tarsier,Difficult,1:30,https://images.pexels.com/photos/4086737/pexels-photo-4086737.jpeg,One of the world's smallest primates.`;
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -386,6 +387,7 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                       ["Answer accepts a letter (B), a number (2), the exact option text — or any free text for open questions.", true],
                       ["Round groups questions: Easy 1pt · Average 2pts · Difficult 3pts · Clincher 5pts. Blank round = one general round.", true],
                       ["Optional Points column overrides scoring per question.", true],
+                      ["Optional Time column (Time / Timer / Seconds / Duration) sets a custom countdown for questions that need more working time — accepts 90, 90s, or 1:30. Blank = the round's timer set in the app.", true],
                       ["Optional Image column (Image / Picture / Photo) — paste a direct image URL or Google Drive share link for guess-the-image rounds. Works with MCQ and open questions.", true],
                       ["Optional Explanation shows after the answer reveal.", true],
                     ].map(([text], i) => (

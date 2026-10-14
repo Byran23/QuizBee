@@ -10,6 +10,8 @@ export interface Question {
   answerText?: string;
   round: string;
   points: number;
+  /** per-question time limit in seconds; 0 => use the round default */
+  seconds: number;
   explanation?: string;
   /** optional image to display with the question (guess-the-image) */
   image?: string;

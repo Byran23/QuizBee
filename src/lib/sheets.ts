@@ -191,10 +191,34 @@ const MATCHERS = {
   points: /^(points|pts|score|value|weight)$/i,
   explanation: /^(explanation|why|explain|solutiontext|note|notes|rationale|hint)$/i,
   image: /^(image|imageurl|img|imgurl|picture|pictureurl|photo|photourl|imagelink)$/i,
+  seconds: /^(time|timer|seconds|secs|sec|timelimit|duration|countdown|timeallotment|allotment)$/i,
   optionsCombined: /^(options|choices|choiceslist)$/i,
   optionIndexed: /^([a-f])$/i,
   optionLong: /^(option|choice|choice|opt|a)([a-f]|[1-6])$/i,
 };
+
+/** Parse a time cell: "45", "45s", "90 sec", "1:30" (mm:ss) → seconds. Blank → null. */
+export function parseSeconds(raw: string): number | null {
+  const s = raw.trim().toLowerCase();
+  if (!s) return null;
+  // mm:ss
+  const clock = s.match(/^(\d{1,2}):([0-5]?\d)$/);
+  if (clock) {
+    const total = parseInt(clock[1]) * 60 + parseInt(clock[2]);
+    return total > 0 ? total : null;
+  }
+  // "1m 30s" / "2 min"
+  const mm = s.match(/(\d+(?:\.\d+)?)\s*m(?:in(?:ute)?s?)?\b/);
+  const ss = s.match(/(\d+(?:\.\d+)?)\s*s(?:ec(?:ond)?s?)?\b/);
+  if (mm || ss) {
+    const total = (mm ? parseFloat(mm[1]) * 60 : 0) + (ss ? parseFloat(ss[1]) : 0);
+    return total > 0 ? Math.round(total) : null;
+  }
+  // bare number
+  const n = parseFloat(s.replace(/[^\d.]/g, ""));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n);
+}
 
 /** Normalize an image cell into a displayable URL (handles =IMAGE() + Drive share links). */
 export function normalizeImageUrl(raw: string): string | undefined {
@@ -274,6 +298,8 @@ interface RawRow {
   answerRaw: string;
   round: string;
   points: number | null;
+  /** per-question seconds; null => use the round default */
+  seconds?: number | null;
   explanation: string;
   image?: string;
 }
@@ -290,6 +316,7 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
     else if (MATCHERS.points.test(h) && col.points === undefined) col.points = i;
     else if (MATCHERS.explanation.test(h)) col.explanation = i;
     else if (MATCHERS.image.test(h)) col.image = i;
+    else if (MATCHERS.seconds.test(h) && col.seconds === undefined) col.seconds = i;
     else if (MATCHERS.optionsCombined.test(h)) col.options = i;
     else {
       const li = letterColIndex(h);
@@ -341,6 +368,7 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
       answerRaw: answerRaw || (isOpen ? options[0] : ""), // fallback: lone option = answer
       round: get(col.round).trim(),
       points: Number.isFinite(ptsParsed) && ptsParsed > 0 ? ptsParsed : null,
+      seconds: parseSeconds(get(col.seconds)), // blank → null → round default
       explanation: get(col.explanation).trim(),
       image,
     });
@@ -366,7 +394,8 @@ export function recomputeTotals(data: QuizData): QuizData {
     0
   );
   const estimatedSeconds = data.rounds.reduce(
-    (sum, rd) => sum + rd.questions.length * (rd.def.seconds + 6),
+    (sum, rd) =>
+      sum + rd.questions.reduce((s, q) => s + (q.seconds > 0 ? q.seconds : rd.def.seconds) + 6, 0),
     0
   );
   return { ...data, totalPoints, estimatedSeconds };
@@ -409,6 +438,7 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
       answerText,
       round: r.round,
       points: r.points ?? 0, // 0 => use round default
+      seconds: r.seconds ?? 0, // 0 => use round default
       explanation: r.explanation || undefined,
       image: r.image,
     });
@@ -421,7 +451,8 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
     0
   );
   const estimatedSeconds = rounds.reduce(
-    (sum, rd) => sum + rd.questions.length * (rd.def.seconds + 6),
+    (sum, rd) =>
+      sum + rd.questions.reduce((s, q) => s + (q.seconds > 0 ? q.seconds : rd.def.seconds) + 6, 0),
     0
   );
 

@@ -34,7 +34,9 @@ export default function HostGame({
   const [qIndex, setQIndex] = useState(0);
   const [qState, setQState] = useState<QState>("hidden");
   const [running, setRunning] = useState(timerMode === "auto");
-  const [left, setLeft] = useState(round.def.seconds);
+  const [left, setLeft] = useState(
+    round.questions[0]?.seconds > 0 ? round.questions[0].seconds : round.def.seconds
+  );
   const [awardSet, setAwardSet] = useState<string[]>([]);
   const [muted, setMutedState] = useState(isMuted());
   const [showAllTeams, setShowAllTeams] = useState(false);
@@ -54,6 +56,8 @@ export default function HostGame({
   const question = round.questions[Math.min(qIndex, round.questions.length - 1)];
   const isOpen = question.kind === "open";
   const pointsFor = question.points > 0 ? question.points : round.def.points;
+  // per-question timer from the sheet, else the round default
+  const secondsFor = question.seconds > 0 ? question.seconds : round.def.seconds;
   // live standings: highest score first, ties broken by seat — re-sorts on every award
   const ordered = [...teams].sort(
     (a, b) => b.total - a.total || a.contestant.seat - b.contestant.seat
@@ -135,15 +139,17 @@ export default function HostGame({
     appliedRef.current = true;
     awardSet.forEach((id) => onAward(id, qIndex, pointsFor));
     if (awardSet.length > 0) sfx.correct();
+    const nextQ = round.questions[qIndex + 1];
+    const nextSeconds = nextQ && nextQ.seconds > 0 ? nextQ.seconds : round.def.seconds;
     setQIndex((i) => i + 1);
     setQState("hidden");
     setAwardSet([]);
-    setLeft(round.def.seconds);
-    leftRef.current = round.def.seconds;
+    setLeft(nextSeconds);
+    leftRef.current = nextSeconds;
     setRunning(timerMode === "auto");
     appliedRef.current = false;
     if (awardSet.length === 0) sfx.advance();
-  }, [qState, awardSet, onAward, qIndex, pointsFor, round.def.seconds, timerMode]);
+  }, [qState, awardSet, onAward, qIndex, pointsFor, round.def.seconds, round.questions, timerMode]);
 
   /* ---------- keyboard ---------- */
   useEffect(() => {
@@ -175,7 +181,7 @@ export default function HostGame({
   }, [roundDone, qState, reveal, showAnswer, confirmNext, toggleAward, teams, running, startTimer]);
 
   /* ---------- derived ---------- */
-  const frac = left / round.def.seconds;
+  const frac = left / secondsFor;
   const danger = left <= 5 && qState === "live" && !timeUp;
   const accent = timeUp && qState === "live" ? "#FFB84D" : danger ? "#FF5C8A" : round.def.color;
   const R = 30;
@@ -332,7 +338,7 @@ export default function HostGame({
               <span className="font-mono text-[11px] tracking-[0.35em] text-fog md:text-[13px]">
                 QUESTION {String(qIndex + 1).padStart(2, "0")}
                 <span className="mx-2 hl-text">|</span>
-                <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""} · {round.def.seconds}S</span>
+                <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""} · {secondsFor}S</span>
                 {isOpen && <span className="ml-2 text-violet">· OPEN ANSWER</span>}
                 {question.image && <span className="ml-2 text-sky">· 🖼 IMAGE</span>}
               </span>
@@ -516,7 +522,7 @@ export default function HostGame({
                   className="sheen group mt-10 flex items-center gap-3 rounded-2xl bg-sky px-10 py-5 font-mono text-sm font-bold tracking-[0.2em] text-ink shadow-[0_0_50px_rgba(92,210,255,0.35)] transition active:scale-[0.98] md:mt-14 md:text-base"
                 >
                   <PlayCircle className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  START {round.def.seconds}s TIMER
+                  START {secondsFor}s TIMER
                 </motion.button>
               )}
 

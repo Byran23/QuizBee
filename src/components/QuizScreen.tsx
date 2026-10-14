@@ -38,7 +38,9 @@ export default function QuizScreen({
   const [selfVerdict, setSelfVerdict] = useState<boolean | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const [running, setRunning] = useState(timerMode === "auto");
-  const [timeLeft, setTimeLeft] = useState(round.def.seconds);
+  const [timeLeft, setTimeLeft] = useState(
+    round.questions[0]?.seconds > 0 ? round.questions[0].seconds : round.def.seconds
+  );
   const [muted, setMutedState] = useState(isMuted());
   const startRef = useRef<number>(Date.now());
   const lastTickRef = useRef<number>(round.def.seconds);
@@ -49,6 +51,8 @@ export default function QuizScreen({
   const question = round.questions[Math.min(index, round.questions.length - 1)];
   const isOpen = question.kind === "open";
   const pointsFor = question.points > 0 ? question.points : round.def.points;
+  // per-question timer from the sheet, else the round default
+  const secondsFor = question.seconds > 0 ? question.seconds : round.def.seconds;
 
   /* ---------- sync leftRef ---------- */
   useEffect(() => { leftRef.current = timeLeft; }, [timeLeft]);
@@ -57,7 +61,7 @@ export default function QuizScreen({
   useEffect(() => {
     if (phase !== "answering" || roundDone || !running) return;
     startRef.current = Date.now();
-    lastTickRef.current = round.def.seconds;
+    lastTickRef.current = secondsFor;
     const iv = setInterval(() => {
       const next = Math.max(0, leftRef.current - 0.05);
       leftRef.current = next;
@@ -89,7 +93,7 @@ export default function QuizScreen({
       if (lockedRef.current) return;
       lockedRef.current = true;
       const elapsed = (Date.now() - startRef.current) / 1000;
-      const left = Math.max(0, round.def.seconds - elapsed);
+      const left = Math.max(0, secondsFor - elapsed);
       const correct = idx !== null && idx === question.answerIndex;
       if (correct) sfx.correct();
       else if (!to) sfx.wrong(); // time-up already plays its own buzzer — don't stack sounds
@@ -105,7 +109,7 @@ export default function QuizScreen({
         timeLeft: Math.round(left * 10) / 10,
       });
     },
-    [question, pointsFor, round.def.seconds, onQuestionResult]
+    [question, pointsFor, secondsFor, onQuestionResult]
   );
 
   /* ---------- open: show the answer ---------- */
@@ -122,7 +126,7 @@ export default function QuizScreen({
       if (lockedRef.current) return;
       lockedRef.current = true;
       const elapsed = (Date.now() - startRef.current) / 1000;
-      const left = Math.max(0, round.def.seconds - elapsed);
+      const left = Math.max(0, secondsFor - elapsed);
       if (correct) sfx.correct();
       else sfx.wrong();
       setSelfVerdict(correct);
@@ -136,22 +140,24 @@ export default function QuizScreen({
         timeLeft: Math.round(left * 10) / 10,
       });
     },
-    [question, pointsFor, round.def.seconds, onQuestionResult, timedOut]
+    [question, pointsFor, secondsFor, onQuestionResult, timedOut]
   );
 
   /* ---------- advance ---------- */
   const advance = useCallback(() => {
+    const nextQ = round.questions[index + 1];
+    const nextSeconds = nextQ && nextQ.seconds > 0 ? nextQ.seconds : round.def.seconds;
     setIndex((i) => i + 1);
     setSelected(null);
     setSelfVerdict(null);
     setTimedOut(false);
-    setTimeLeft(round.def.seconds);
-    leftRef.current = round.def.seconds;
+    setTimeLeft(nextSeconds);
+    leftRef.current = nextSeconds;
     lockedRef.current = false;
     setRunning(timerMode === "auto");
     setPhase("answering");
     sfx.advance();
-  }, [round.def.seconds, timerMode]);
+  }, [round.def.seconds, round.questions, index, timerMode]);
 
   useEffect(() => {
     if (phase !== "revealed") return;
@@ -202,7 +208,7 @@ export default function QuizScreen({
   }, [phase, isOpen, question, lock, advance, enterCheck, verdict, roundDone, running]);
 
   /* ---------- derived ---------- */
-  const frac = timeLeft / round.def.seconds;
+  const frac = timeLeft / secondsFor;
   const danger = timeLeft <= 5 && phase === "answering";
   const accent = danger ? "#FF5C8A" : round.def.color;
   const R = 26;
@@ -346,7 +352,7 @@ export default function QuizScreen({
                   className="sheen group flex items-center gap-2.5 rounded-xl bg-sky px-8 py-4 font-mono text-[13px] font-bold tracking-[0.2em] text-ink shadow-[0_0_34px_rgba(92,210,255,0.3)] transition active:scale-[0.98]"
                 >
                   <PlayCircle className="h-4 w-4 transition-transform group-hover:scale-110" />
-                  START {round.def.seconds}s TIMER
+                  START {secondsFor}s TIMER
                 </button>
               </motion.div>
             )}

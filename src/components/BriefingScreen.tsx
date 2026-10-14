@@ -142,6 +142,12 @@ export default function BriefingScreen({ data, sourceUrl, via, onStart, onBack, 
             </h3>
             <div className="mt-3 font-mono text-[11px] text-fog">
               <p>{r.questions.length} question{r.questions.length !== 1 ? "s" : ""}</p>
+              {r.questions.some((q) => q.seconds > 0) && (
+                <p className="mt-1 text-sky">
+                  {r.questions.filter((q) => q.seconds > 0).length} custom timer
+                  {r.questions.filter((q) => q.seconds > 0).length !== 1 ? "s" : ""}
+                </p>
+              )}
             </div>
             <div className="mt-3 space-y-2">
               <div>

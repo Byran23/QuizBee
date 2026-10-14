@@ -22,6 +22,7 @@ const DEMO_ROWS = [
   { question: "The Rosetta Stone was key to deciphering which writing system?", options: ["Cuneiform", "Mayan glyphs", "Linear B", "Egyptian hieroglyphs"], answerRaw: "D", round: "Clincher", points: null, explanation: "Decoded by Champollion in 1822, it carried the same decree in three scripts." },
   { question: "Name the largest desert on Earth.", options: [], answerRaw: "Antarctic Desert", round: "Clincher", points: null, explanation: "Deserts are defined by dryness, not heat — Antarctica’s polar desert is the largest. The Sahara is the largest hot desert." },
   { question: "What animal is shown in the image?", options: [], answerRaw: "Philippine Tarsier", round: "Difficult", points: null, explanation: "The Philippine tarsier — one of the world's smallest primates, famous for its enormous eyes. An open image-guess question.", image: "https://images.pexels.com/photos/4086737/pexels-photo-4086737.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
+  { question: "A train leaves at 2:15 PM travelling 80 km/h and arrives 3 hours 45 minutes later. How far did it travel?", options: ["260 km", "280 km", "300 km", "320 km"], answerRaw: "C", round: "Clincher", points: null, seconds: 90, explanation: "80 km/h × 3.75 h = 300 km. This question gets 90 seconds from the sheet's Time column.", image: undefined },
 ];
 
 export function demoQuiz(): QuizData {
