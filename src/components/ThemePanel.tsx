@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Palette as PaletteIcon, X, ImagePlus, Trash2, Check, Sun, Droplets, RotateCcw,
+  Layers, Zap, Timer as TimerIcon, Moon, SunMedium, Blend, Plus,
 } from "lucide-react";
 import { cn } from "../utils/cn";
-import { PALETTES, ThemeState, DEFAULT_THEME, fileToDataUrl, resolvePalette } from "../lib/theme";
+import { PALETTES, SKINS, ThemeState, DEFAULT_THEME, DEFAULT_MARQUEE, fileToDataUrl, resolvePalette } from "../lib/theme";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -119,6 +120,145 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
                 </button>
               </div>
 
+              {/* title */}
+              <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">TITLE</p>
+              <div className="mt-2.5 flex items-center gap-2">
+                <input
+                  value={theme.titleA}
+                  onChange={(e) => onChange({ titleA: e.target.value.slice(0, 14) })}
+                  placeholder="QUIZ"
+                  className="glass min-w-0 flex-1 rounded-xl px-3 py-2.5 text-center font-mono text-[12px] font-bold tracking-wider text-paper placeholder:text-fog/40"
+                />
+                <span className="font-mono text-base font-bold text-lime">·</span>
+                <input
+                  value={theme.titleB}
+                  onChange={(e) => onChange({ titleB: e.target.value.slice(0, 14) })}
+                  placeholder="BEE"
+                  className="glass min-w-0 flex-1 rounded-xl px-3 py-2.5 text-center font-mono text-[12px] font-bold tracking-wider text-paper placeholder:text-fog/40"
+                />
+              </div>
+              <p className="mt-1.5 text-[10px] leading-snug text-fog/70">
+                Two halves split by an accent dot. Leave one blank for a single word.
+              </p>
+
+              {/* marquee */}
+              <p className="mt-5 flex items-center justify-between font-mono text-[10px] tracking-[0.25em] text-fog">
+                TICKER
+                <button
+                  onClick={() => onChange({ marquee: [...DEFAULT_MARQUEE] })}
+                  className="font-mono text-[9px] tracking-[0.15em] text-fog/70 transition hover:text-paper"
+                >
+                  RESET
+                </button>
+              </p>
+              <div className="mt-2.5 space-y-1.5">
+                {theme.marquee.map((item, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <input
+                      value={item}
+                      onChange={(e) => {
+                        const next = [...theme.marquee];
+                        next[i] = e.target.value.slice(0, 40);
+                        onChange({ marquee: next });
+                      }}
+                      className="glass min-w-0 flex-1 rounded-lg px-2.5 py-2 font-mono text-[10px] tracking-wider text-paper"
+                    />
+                    <button
+                      onClick={() => onChange({ marquee: theme.marquee.filter((_, j) => j !== i) })}
+                      disabled={theme.marquee.length <= 1}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-fog transition hover:bg-rose/10 hover:text-rose disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => onChange({ marquee: [...theme.marquee, "NEW ITEM"] })}
+                disabled={theme.marquee.length >= 12}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-line py-2 font-mono text-[9px] tracking-[0.2em] text-fog transition hover:border-lime/40 hover:text-paper disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Plus className="h-3 w-3" /> ADD ITEM
+              </button>
+
+              {/* dark / light */}
+              <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">APPEARANCE</p>
+              <div className="mt-2.5 grid grid-cols-2 gap-2">
+                {([
+                  ["dark", "Dark", Moon],
+                  ["light", "Light", SunMedium],
+                ] as const).map(([m, label, Icon]) => {
+                  const active = theme.mode === m;
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => onChange({ mode: m })}
+                      className={cn(
+                        "glass flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 transition hover:border-white/25",
+                        active && "!border-[var(--color-lime)]"
+                      )}
+                    >
+                      <Icon className={cn("h-3.5 w-3.5", active ? "text-lime" : "text-fog")} />
+                      <span className="font-mono text-[10px] tracking-wider text-paper">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* skins */}
+              <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">LAYOUT STYLE</p>
+              <div className="mt-2.5 space-y-2">
+                {SKINS.map((s) => {
+                  const active = theme.skin === s.key;
+                  return (
+                    <button
+                      key={s.key}
+                      onClick={() => onChange({ skin: s.key })}
+                      className={cn(
+                        "glass flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left transition hover:border-white/25",
+                        active && "!border-[var(--color-lime)]"
+                      )}
+                    >
+                      <Layers className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", active ? "text-lime" : "text-fog")} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-mono text-[11px] tracking-wider text-paper">{s.name}</span>
+                        <span className="mt-0.5 block text-[10px] leading-snug text-fog">{s.blurb}</span>
+                      </span>
+                      {active && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-lime" strokeWidth={3} />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* timer start mode */}
+              <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">TIMER START</p>
+              <div className="mt-2.5 grid grid-cols-2 gap-2">
+                {([
+                  ["auto", "On reveal", Zap],
+                  ["manual", "After reading", TimerIcon],
+                ] as const).map(([mode, label, Icon]) => {
+                  const active = theme.timerMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => onChange({ timerMode: mode })}
+                      className={cn(
+                        "glass flex flex-col items-start gap-1 rounded-xl px-3 py-2.5 transition hover:border-white/25",
+                        active && "!border-[var(--color-lime)]"
+                      )}
+                    >
+                      <Icon className={cn("h-3.5 w-3.5", active ? "text-lime" : "text-fog")} />
+                      <span className="font-mono text-[10px] tracking-wider text-paper">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[10px] leading-snug text-fog/70">
+                {theme.timerMode === "manual"
+                  ? "Question appears with the clock paused — press Space (or the button) to start it once you’ve finished reading."
+                  : "The countdown begins the moment the question is revealed."}
+              </p>
+
               {/* palettes */}
               <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">PALETTE</p>
               <div className="mt-2.5 grid grid-cols-2 gap-2">
@@ -179,6 +319,52 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
                   <RotateCcw className="h-3 w-3" /> RESET TO PALETTE
                 </button>
               )}
+
+              {/* question + box colours */}
+              <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">QUESTION & BOXES</p>
+              <div className="mt-2.5 flex gap-2">
+                <label className="glass flex flex-1 items-center gap-2 rounded-xl px-2.5 py-2">
+                  <input
+                    type="color"
+                    value={theme.qColor ?? (theme.mode === "light" ? "#11131a" : "#f4f4f0")}
+                    onChange={(e) => onChange({ qColor: e.target.value })}
+                    className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                  />
+                  <span className="font-mono text-[10px] tracking-wider text-fog">Question</span>
+                </label>
+                <label className="glass flex flex-1 items-center gap-2 rounded-xl px-2.5 py-2">
+                  <input
+                    type="color"
+                    value={theme.boxColor ?? (theme.mode === "light" ? "#ffffff" : "#0a0a0e")}
+                    onChange={(e) => onChange({ boxColor: e.target.value })}
+                    className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                  />
+                  <span className="font-mono text-[10px] tracking-wider text-fog">Boxes</span>
+                </label>
+              </div>
+              {(theme.qColor || theme.boxColor) && (
+                <button
+                  onClick={() => onChange({ qColor: null, boxColor: null })}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-line py-1.5 font-mono text-[9px] tracking-[0.2em] text-fog transition hover:border-rose/40 hover:text-rose"
+                >
+                  <RotateCcw className="h-3 w-3" /> RESET COLOURS
+                </button>
+              )}
+
+              <div className="mt-4">
+                <Slider
+                  label="BOX FILL"
+                  icon={<Blend className="h-3 w-3" />}
+                  unit="%"
+                  min={0}
+                  max={100}
+                  value={theme.boxFill ?? Math.round((theme.mode === "light" ? 0.72 : 0.06) * 100)}
+                  onChange={(v) => onChange({ boxFill: v })}
+                />
+                <p className="mt-1.5 text-[10px] leading-snug text-fog/70">
+                  0% = fully see-through · 100% = solid panels
+                </p>
+              </div>
 
               {/* background */}
               <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">BACKGROUND IMAGE</p>

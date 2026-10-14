@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Flame, X, Check, Clock, Lightbulb, ChevronRight, Volume2, VolumeX, LogOut, Eye,
+  Flame, X, Check, Clock, Lightbulb, ChevronRight, Volume2, VolumeX, LogOut, Eye, PlayCircle,
 } from "lucide-react";
 // note: X still used in the open-answer "MISSED IT" button
 import { cn } from "../utils/cn";
@@ -21,13 +21,15 @@ interface Props {
   totalRounds: number;
   score: number;
   streak: number;
+  /** "manual" = read the question first, then start the clock yourself */
+  timerMode?: "auto" | "manual";
   onQuestionResult: (record: AnswerRecord) => void;
   onRoundDone: () => void;
   onQuit: () => void;
 }
 
 export default function QuizScreen({
-  round, roundIndex, totalRounds, score, streak,
+  round, roundIndex, totalRounds, score, streak, timerMode = "auto",
   onQuestionResult, onRoundDone, onQuit,
 }: Props) {
   const [index, setIndex] = useState(0);
@@ -35,6 +37,7 @@ export default function QuizScreen({
   const [selected, setSelected] = useState<number | null>(null);
   const [selfVerdict, setSelfVerdict] = useState<boolean | null>(null);
   const [timedOut, setTimedOut] = useState(false);
+  const [running, setRunning] = useState(timerMode === "auto");
   const [timeLeft, setTimeLeft] = useState(round.def.seconds);
   const [muted, setMutedState] = useState(isMuted());
   const startRef = useRef<number>(Date.now());
@@ -52,7 +55,7 @@ export default function QuizScreen({
 
   /* ---------- countdown ---------- */
   useEffect(() => {
-    if (phase !== "answering" || roundDone) return;
+    if (phase !== "answering" || roundDone || !running) return;
     startRef.current = Date.now();
     lastTickRef.current = round.def.seconds;
     const iv = setInterval(() => {
@@ -73,7 +76,7 @@ export default function QuizScreen({
     }, 50);
     return () => clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, phase]);
+  }, [index, phase, running]);
 
   /* ---------- round completion ---------- */
   useEffect(() => {
@@ -145,9 +148,10 @@ export default function QuizScreen({
     setTimeLeft(round.def.seconds);
     leftRef.current = round.def.seconds;
     lockedRef.current = false;
+    setRunning(timerMode === "auto");
     setPhase("answering");
     sfx.advance();
-  }, [round.def.seconds]);
+  }, [round.def.seconds, timerMode]);
 
   useEffect(() => {
     if (phase !== "revealed") return;
@@ -160,6 +164,15 @@ export default function QuizScreen({
     const onKey = (e: KeyboardEvent) => {
       if (roundDone) return;
       if (phase === "answering") {
+        // manual mode: read first, Space starts the clock
+        if (!running) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            sfx.roundStart();
+            setRunning(true);
+          }
+          return;
+        }
         if (isOpen) {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -186,7 +199,7 @@ export default function QuizScreen({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, isOpen, question, lock, advance, enterCheck, verdict, roundDone]);
+  }, [phase, isOpen, question, lock, advance, enterCheck, verdict, roundDone, running]);
 
   /* ---------- derived ---------- */
   const frac = timeLeft / round.def.seconds;
@@ -286,7 +299,7 @@ export default function QuizScreen({
                   lineHeight={1.06}
                   className="mt-3 flex w-full items-center"
                   style={{ height: question.image ? "clamp(4rem, 14vh, 8rem)" : "clamp(7rem, 32vh, 19rem)" }}
-                  textClassName="type-qa text-paper"
+                  textClassName="type-qa q-text"
                 />
               </div>
 
@@ -317,6 +330,25 @@ export default function QuizScreen({
               <div className="mt-5">
                 <QuestionImage src={question.image} alt={`Question ${index + 1} image`} compact />
               </div>
+            )}
+
+            {/* start-the-clock (manual mode) */}
+            {phase === "answering" && !running && (
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease }}
+                className="mt-7 flex flex-col items-center gap-2"
+              >
+                <p className="font-mono text-[11px] tracking-[0.3em] text-fog/60">READ IT FIRST — CLOCK IS PAUSED</p>
+                <button
+                  onClick={() => { sfx.roundStart(); setRunning(true); }}
+                  className="sheen group flex items-center gap-2.5 rounded-xl bg-sky px-8 py-4 font-mono text-[13px] font-bold tracking-[0.2em] text-ink shadow-[0_0_34px_rgba(92,210,255,0.3)] transition active:scale-[0.98]"
+                >
+                  <PlayCircle className="h-4 w-4 transition-transform group-hover:scale-110" />
+                  START {round.def.seconds}s TIMER
+                </button>
+              </motion.div>
             )}
 
             {/* ============ MCQ options — on reveal only the correct one remains, zoomed & centered ============ */}
@@ -350,8 +382,8 @@ export default function QuizScreen({
                           delay: revealed ? 0.12 : 0.15 + i * 0.07,
                           ease,
                         }}
-                        onClick={() => { if (phase === "answering") { sfx.select(); lock(i); } }}
-                        disabled={phase !== "answering"}
+                        onClick={() => { if (phase === "answering" && running) { sfx.select(); lock(i); } }}
+                        disabled={phase !== "answering" || !running}
                         className={cn(
                           "relative flex items-center gap-5 rounded-2xl border text-left transition-colors duration-300 md:gap-6",
                           phase === "answering" &&
@@ -366,7 +398,7 @@ export default function QuizScreen({
                             initial={{ scale: 0, rotate: -40 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ duration: 0.42, delay: 0.42, ease }}
-                            className="absolute -left-3 -top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-lime text-ink shadow-[0_0_22px_rgba(184,255,60,0.75)]"
+                            className="absolute -left-3 -top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-lime text-ink shadow-[0_0_22px_rgba(184,255,60,0.75)]"
                           >
                             <Check className="h-5 w-5" strokeWidth={3.5} />
                           </motion.span>
@@ -395,7 +427,7 @@ export default function QuizScreen({
             )}
 
             {/* ============ open-answer flow ============ */}
-            {isOpen && phase === "answering" && (
+            {isOpen && phase === "answering" && running && (
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}

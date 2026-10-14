@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Eye, Check, Clock, ChevronRight, Volume2, VolumeX, LogOut,
-  Lightbulb, PenLine, Award, UsersRound, Hourglass, BellRing,
+  Eye, Check, Clock, ChevronRight, ChevronDown, Volume2, VolumeX, LogOut,
+  Lightbulb, PenLine, Award, UsersRound, Hourglass, BellRing, PlayCircle,
 } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { QuizRound, TeamScore } from "../../lib/types";
@@ -21,22 +21,34 @@ interface Props {
   roundIndex: number;
   totalRounds: number;
   teams: TeamScore[];
+  /** "manual" = host reads the question first, then starts the clock */
+  timerMode?: "auto" | "manual";
   onAward: (teamId: string, questionIndex: number, points: number) => void;
   onRoundDone: () => void;
   onQuit: () => void;
 }
 
 export default function HostGame({
-  round, roundIndex, totalRounds, teams, onAward, onRoundDone, onQuit,
+  round, roundIndex, totalRounds, teams, timerMode = "auto", onAward, onRoundDone, onQuit,
 }: Props) {
   const [qIndex, setQIndex] = useState(0);
   const [qState, setQState] = useState<QState>("hidden");
+  const [running, setRunning] = useState(timerMode === "auto");
   const [left, setLeft] = useState(round.def.seconds);
   const [awardSet, setAwardSet] = useState<string[]>([]);
   const [muted, setMutedState] = useState(isMuted());
+  const [showAllTeams, setShowAllTeams] = useState(false);
+  const [vw, setVw] = useState(() => (typeof window === "undefined" ? 1280 : window.innerWidth));
   const leftRef = useRef(round.def.seconds);
   const lastTickRef = useRef(round.def.seconds);
   const appliedRef = useRef(false);
+
+  /* track viewport width so the scoreboard can re-flow */
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const roundDone = qIndex >= round.questions.length;
   const question = round.questions[Math.min(qIndex, round.questions.length - 1)];
@@ -49,11 +61,27 @@ export default function HostGame({
   const bySeat = (seat: number) => teams.find((t) => t.contestant.seat === seat);
   const timeUp = left <= 0;
 
+  /**
+   * Scoreboard columns scale with how many competitors there are,
+   * so chips always fit the screen width without squashing.
+   */
+  const teamColumns = useMemo(() => {
+    const n = Math.max(1, teams.length);
+    const perRow = Math.max(1, Math.floor((vw - 32) / 140)); // chips the row can hold
+    if (n <= 4) return Math.min(n, vw < 640 ? 2 : 4);
+    if (n <= 6) return Math.min(6, vw < 640 ? 2 : vw < 900 ? 3 : 6);
+    if (n <= 10) return Math.min(perRow, vw < 640 ? 2 : 5);
+    return Math.min(perRow, vw < 640 ? 2 : vw < 900 ? 4 : 6);
+  }, [teams.length, vw]);
+  // rows the strip will occupy, and whether we need a scroll/expand affordance
+  const teamRows = Math.ceil(teams.length / teamColumns);
+  const needsOverflow = teamRows > 2;
+
   /* ---------- timer: runs only while live ---------- */
   useEffect(() => { leftRef.current = left; }, [left]);
 
   useEffect(() => {
-    if (qState !== "live" || roundDone) return;
+    if (qState !== "live" || roundDone || !running) return;
     lastTickRef.current = Math.ceil(leftRef.current);
     const iv = setInterval(() => {
       const next = Math.max(0, leftRef.current - 0.1);
@@ -71,7 +99,7 @@ export default function HostGame({
     }, 100);
     return () => clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qState, qIndex, roundDone]);
+  }, [qState, qIndex, roundDone, running]);
 
   useEffect(() => {
     if (roundDone) onRoundDone();
@@ -84,9 +112,16 @@ export default function HostGame({
     setQState("live");
   }, [qState]);
 
+  const startTimer = useCallback(() => {
+    if (qState !== "live" || running) return;
+    sfx.roundStart();
+    setRunning(true);
+  }, [qState, running]);
+
   const showAnswer = useCallback(() => {
     if (qState !== "live") return;
     sfx.select();
+    setRunning(false);
     setQState("revealed");
   }, [qState]);
 
@@ -105,9 +140,10 @@ export default function HostGame({
     setAwardSet([]);
     setLeft(round.def.seconds);
     leftRef.current = round.def.seconds;
+    setRunning(timerMode === "auto");
     appliedRef.current = false;
     if (awardSet.length === 0) sfx.advance();
-  }, [qState, awardSet, onAward, qIndex, pointsFor, round.def.seconds]);
+  }, [qState, awardSet, onAward, qIndex, pointsFor, round.def.seconds, timerMode]);
 
   /* ---------- keyboard ---------- */
   useEffect(() => {
@@ -116,8 +152,11 @@ export default function HostGame({
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
         if (qState === "hidden") reveal();
-        else if (qState === "live") showAnswer();
-        else confirmNext();
+        else if (qState === "live") {
+          // manual mode inserts a "read it, then start the clock" step
+          if (!running) startTimer();
+          else showAnswer();
+        } else confirmNext();
         return;
       }
       if (qState === "revealed") {
@@ -133,7 +172,7 @@ export default function HostGame({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roundDone, qState, reveal, showAnswer, confirmNext, toggleAward, teams]);
+  }, [roundDone, qState, reveal, showAnswer, confirmNext, toggleAward, teams, running, startTimer]);
 
   /* ---------- derived ---------- */
   const frac = left / round.def.seconds;
@@ -199,7 +238,14 @@ export default function HostGame({
         style={{ overflow: "hidden" }}
         className="w-full"
       >
-      <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(138px,1fr))] gap-2 px-4 md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:px-8">
+      <div
+        className="grid w-full gap-2 px-4 md:px-8"
+        style={{
+          gridTemplateColumns: `repeat(${teamColumns}, minmax(0, 1fr))`,
+          maxHeight: showAllTeams ? undefined : "9.5rem",
+          overflowY: showAllTeams ? undefined : "auto",
+        }}
+      >
         {ordered.map((t) => {
           const inAward = awardSet.includes(t.contestant.id);
           const interactive = qState === "revealed";
@@ -211,7 +257,7 @@ export default function HostGame({
               onClick={() => interactive && toggleAward(t.contestant.id)}
               disabled={!interactive}
               className={cn(
-                "glass relative flex items-center gap-2 rounded-xl px-2.5 py-2 text-left transition md:px-3 md:py-2.5",
+                "glass relative flex items-center gap-2 rounded-xl px-2 py-2 text-left transition md:px-2.5",
                 inAward
                   ? "!border-[var(--tc)]"
                   : interactive
@@ -232,7 +278,7 @@ export default function HostGame({
               />
               <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper md:text-[13px]">{t.contestant.name}</span>
               {t.contestant.seat <= 9 && (
-                <span className="hidden shrink-0 rounded bg-white/[0.07] px-1.5 py-0.5 font-mono text-[9px] font-bold text-fog/70 sm:block" title={`Press ${t.contestant.seat} to toggle award`}>
+                <span className="hidden shrink-0 rounded bg-white/[0.07] px-1.5 py-0.5 font-mono text-[9px] font-bold text-fog/70 lg:block" title={`Press ${t.contestant.seat} to toggle award`}>
                   {t.contestant.seat}
                 </span>
               )}
@@ -250,7 +296,7 @@ export default function HostGame({
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-lime text-ink"
+                  className="absolute -right-1.5 -top-1.5 z-20 grid h-5 w-5 place-items-center rounded-full bg-lime text-ink"
                 >
                   <Check className="h-3 w-3" strokeWidth={3.5} />
                 </motion.span>
@@ -259,6 +305,15 @@ export default function HostGame({
           );
         })}
       </div>
+        {needsOverflow && (
+          <button
+            onClick={() => setShowAllTeams((v) => !v)}
+            className="mx-auto mt-2 flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 font-mono text-[9px] tracking-[0.2em] text-fog transition hover:border-white/30 hover:text-paper"
+          >
+            <ChevronDown className={cn("h-3 w-3 transition-transform", showAllTeams && "rotate-180")} />
+            {showAllTeams ? "SHOW FEWER" : `+${teams.length - teamColumns * 2} MORE`}
+          </button>
+        )}
       </motion.div>
 
       {/* ================= stage ================= */}
@@ -301,7 +356,9 @@ export default function HostGame({
               <div className="flex w-full max-w-6xl items-center justify-between gap-4">
                 <span className="font-mono text-[11px] tracking-[0.3em] text-fog/80 md:text-[12px]">
                   {qState === "live"
-                    ? timeUp ? "TIME'S UP — REVEAL THE ANSWER" : "TEAMS ANSWER NOW"
+                    ? !running
+                      ? "READ THE QUESTION — THEN START THE CLOCK"
+                      : timeUp ? "TIME'S UP — REVEAL THE ANSWER" : "TEAMS ANSWER NOW"
                     : "ANSWER REVEALED — AWARD POINTS"}
                 </span>
                 <div className={cn("relative shrink-0", danger && "ring-pulse")}>
@@ -316,7 +373,11 @@ export default function HostGame({
                   </svg>
                   <div className="absolute inset-0 grid place-items-center">
                     <span className="font-mono text-xl font-bold tabular-nums md:text-2xl" style={{ color: accent }}>
-                      {timeUp && qState !== "revealed" ? <Hourglass className="h-5 w-5 md:h-6 md:w-6" /> : qState === "revealed" ? <Clock className="h-5 w-5 text-fog md:h-6 md:w-6" /> : Math.ceil(left)}
+                      {timeUp && qState !== "revealed"
+                        ? <Hourglass className="h-5 w-5 md:h-6 md:w-6" />
+                        : qState === "revealed"
+                          ? <Clock className="h-5 w-5 text-fog md:h-6 md:w-6" />
+                          : Math.ceil(left)}
                     </span>
                   </div>
                 </div>
@@ -344,8 +405,8 @@ export default function HostGame({
                   transition: "height 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
                 }}
                 textClassName={cn(
-                  "type-qa text-center transition-colors duration-500",
-                  qState === "revealed" ? "text-paper/55" : "text-paper"
+                  "type-qa q-text text-center transition-opacity duration-500",
+                  qState === "revealed" ? "opacity-60" : "opacity-100"
                 )}
               />
 
@@ -400,7 +461,7 @@ export default function HostGame({
                               initial={{ scale: 0, rotate: -40 }}
                               animate={{ scale: 1, rotate: 0 }}
                               transition={{ duration: 0.45, delay: 0.45, ease }}
-                              className="absolute -left-3 -top-3 grid h-9 w-9 place-items-center rounded-full bg-lime text-ink shadow-[0_0_24px_rgba(184,255,60,0.7)] md:-left-4 md:-top-4 md:h-11 md:w-11"
+                              className="absolute -left-3 -top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-lime text-ink shadow-[0_0_24px_rgba(184,255,60,0.7)] md:-left-4 md:-top-4 md:h-11 md:w-11"
                             >
                               <Check className="h-5 w-5 md:h-6 md:w-6" strokeWidth={3.5} />
                             </motion.span>
@@ -445,8 +506,22 @@ export default function HostGame({
                 </motion.p>
               )}
 
+              {/* start-the-clock (manual mode) */}
+              {qState === "live" && !running && (
+                <motion.button
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.3, ease }}
+                  onClick={startTimer}
+                  className="sheen group mt-10 flex items-center gap-3 rounded-2xl bg-sky px-10 py-5 font-mono text-sm font-bold tracking-[0.2em] text-ink shadow-[0_0_50px_rgba(92,210,255,0.35)] transition active:scale-[0.98] md:mt-14 md:text-base"
+                >
+                  <PlayCircle className="h-5 w-5 transition-transform group-hover:scale-110" />
+                  START {round.def.seconds}s TIMER
+                </motion.button>
+              )}
+
               {/* reveal answer button */}
-              {qState === "live" && (
+              {qState === "live" && running && (
                 <motion.button
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}

@@ -14,7 +14,7 @@ import { recomputeTotals } from "./lib/sheets";
 import { sfx } from "./lib/sound";
 import FullscreenToggle from "./components/FullscreenToggle";
 import ThemePanel from "./components/ThemePanel";
-import { ThemeState, loadTheme, saveTheme, resolvePalette, applyPalette } from "./lib/theme";
+import { ThemeState, loadTheme, saveTheme, resolvePalette, applyPalette, applySkin, applyMode, applySurface } from "./lib/theme";
 
 type View =
   | "setup" | "briefing" | "round-intro" | "quiz" | "results"
@@ -45,6 +45,18 @@ export default function App() {
   useEffect(() => {
     applyPalette(palette);
   }, [palette]);
+
+  useEffect(() => {
+    applySkin(theme.skin);
+  }, [theme.skin]);
+
+  useEffect(() => {
+    applyMode(theme.mode);
+  }, [theme.mode]);
+
+  useEffect(() => {
+    applySurface(theme);
+  }, [theme.qColor, theme.boxColor, theme.boxFill, theme.mode, theme.skin]);
 
   // never let the theme window overlap the live show
   useEffect(() => {
@@ -206,7 +218,13 @@ export default function App() {
       <AnimatePresence mode="wait">
         {view === "setup" && (
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-            <SetupScreen onReady={handleReady} onCustomize={() => setThemeOpen((v) => !v)} />
+            <SetupScreen
+              onReady={handleReady}
+              onCustomize={() => setThemeOpen((v) => !v)}
+              titleA={theme.titleA}
+              titleB={theme.titleB}
+              marquee={theme.marquee}
+            />
           </motion.div>
         )}
 
@@ -242,6 +260,7 @@ export default function App() {
               totalRounds={result.data.rounds.length}
               score={score}
               streak={streak}
+              timerMode={theme.timerMode}
               onQuestionResult={handleQuestionResult}
               onRoundDone={handleRoundDone}
               onQuit={() => { resetSolo(); setView("setup"); }}
@@ -280,6 +299,7 @@ export default function App() {
               roundIndex={roundIndex}
               totalRounds={result.data.rounds.length}
               teams={standings}
+              timerMode={theme.timerMode}
               onAward={handleAward}
               onRoundDone={handleContestRoundDone}
               onQuit={() => { setView("podium"); }}

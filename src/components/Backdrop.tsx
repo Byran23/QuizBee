@@ -41,7 +41,7 @@ export default function Backdrop({ accent = "#B8FF3C", bgImage = null, bgDim = 5
               transform: "scale(1.06)", // hide blur edges
             }}
           />
-          <div className="absolute inset-0 bg-ink" style={{ opacity: bgDim / 100 }} />
+          <div className="absolute inset-0 bg-ink" style={{ opacity: bgDim / 100 }} aria-hidden />
         </>
       )}
       {/* accent orb */}
@@ -60,8 +60,14 @@ export default function Backdrop({ accent = "#B8FF3C", bgImage = null, bgDim = 5
         className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] rounded-full opacity-[0.08] blur-[110px] transition-transform duration-300 ease-out will-change-transform"
         style={{ background: accent }}
       />
-      {/* soft vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(7,7,10,0.55)_100%)]" />
+      {/* soft vignette — tinted to the current mode */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, transparent 35%, color-mix(in srgb, var(--color-ink) 72%, transparent) 100%)",
+        }}
+      />
     </div>
   );
 }

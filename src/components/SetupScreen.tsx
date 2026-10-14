@@ -13,6 +13,9 @@ import { FetchResult } from "../lib/types";
 interface Props {
   onReady: (result: FetchResult, url: string | null) => void;
   onCustomize: () => void;
+  titleA: string;
+  titleB: string;
+  marquee: string[];
 }
 
 const RECENT_KEY = "quizbee.recents";
@@ -24,7 +27,7 @@ What animal is in the image?,,,,,Philippine Tarsier,Difficult,https://images.pex
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-export default function SetupScreen({ onReady, onCustomize }: Props) {
+export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marquee }: Props) {
   const [url, setUrl] = useState("");
   const [tab, setTab] = useState("");
   const [showTab, setShowTab] = useState(false);
@@ -112,18 +115,10 @@ export default function SetupScreen({ onReady, onCustomize }: Props) {
             className="mx-auto mt-6 font-display text-[13vw] leading-[0.95] tracking-tight sm:text-7xl md:text-8xl"
             style={{ fontWeight: 800 }}
           >
-            QUIZ<span className="text-lime">·</span>BEE
+            {titleA}
+            {titleA && titleB && <span className="text-lime">·</span>}
+            {titleB}
           </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.16, ease }}
-            className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-fog md:text-lg"
-          >
-            Point it at a public Google Sheet. It reads every question, groups them into
-            Easy, Average, Difficult and Clincher rounds — then runs the whole show:
-            timers, scoring, streaks and a champion’s podium.
-          </motion.p>
         </section>
 
         {/* marquee */}
@@ -136,13 +131,11 @@ export default function SetupScreen({ onReady, onCustomize }: Props) {
           <div className="animate-marquee flex w-max gap-8 whitespace-nowrap font-mono text-[11px] tracking-[0.35em] text-fog">
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="flex gap-8">
-                {["EASY · 1 PT", "AVERAGE · 2 PTS", "DIFFICULT · 3 PTS", "CLINCHER · 5 PTS", "LIVE TIMER", "INSTANT SCORING", "ANSWER REVIEW"].map(
-                  (t) => (
-                    <span key={t} className="flex items-center gap-8">
-                      {t} <span className="text-lime">✦</span>
-                    </span>
-                  )
-                )}
+                {marquee.map((t, j) => (
+                  <span key={`${t}-${j}`} className="flex items-center gap-8">
+                    {t} <span className="text-lime">✦</span>
+                  </span>
+                ))}
               </div>
             ))}
           </div>
