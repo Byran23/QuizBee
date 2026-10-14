@@ -170,7 +170,7 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                     try { setUrl(await navigator.clipboard.readText()); } catch { /* noop */ }
                   }}
                   title="Paste from clipboard"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-fog transition hover:bg-white/5 hover:text-lime"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-fog transition hover:hl-soft hover:text-lime"
                 >
                   <ClipboardPaste className="h-4 w-4" />
                 </button>
@@ -346,7 +346,7 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                     <div className="overflow-x-auto rounded-xl border border-line">
                       <table className="w-full min-w-[560px] text-left font-mono text-[11px]">
                         <thead>
-                          <tr className="bg-white/[0.04] text-fog">
+                          <tr className="hl-strong text-fog">
                             {["Question", "A", "B", "C", "D", "Answer", "Round"].map((h) => (
                               <th key={h} className="border-b border-line px-3 py-2.5 font-medium tracking-wider">{h}</th>
                             ))}

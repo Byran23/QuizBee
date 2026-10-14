@@ -239,7 +239,7 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
               <span className="w-32 shrink-0 truncate font-mono text-[11px] font-bold tracking-wider" style={{ color: r.def.color }}>
                 {r.def.label.toUpperCase()}
               </span>
-              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/5">
+              <div className="h-2.5 flex-1 overflow-hidden rounded-full hl-soft">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: r.possible ? `${(r.earned / r.possible) * 100}%` : 0 }}
@@ -280,7 +280,7 @@ export default function ResultsScreen({ data, records, score, bestStreak, source
             >
               <div className="space-y-2 border-t border-line px-7 py-6">
                 {records.map((r, i) => (
-                  <div key={i} className="glass !bg-white/[0.03] rounded-xl p-4">
+                  <div key={i} className="glass !hl-strong rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <span className={cn(
                         "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md",

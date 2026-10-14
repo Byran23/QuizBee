@@ -116,7 +116,7 @@ export default function ContestantsSetup({ data, onBegin, onBack }: Props) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
                   transition={{ duration: 0.35, ease, delay: i * 0.05 }}
-                  className="glass group flex items-center gap-3 rounded-xl p-2.5 pl-3.5 transition focus-within:border-white/25"
+                  className="glass group flex items-center gap-3 rounded-xl p-2.5 pl-3.5 transition focus-within:hl-b"
                 >
                   <span className="font-mono text-[11px] font-bold text-fog/60 tabular-nums">{i + 1}</span>
                   <button
@@ -174,7 +174,7 @@ export default function ContestantsSetup({ data, onBegin, onBack }: Props) {
           ADD TEAM {rows.length < MAX_TEAMS ? `(${MAX_TEAMS - rows.length} SLOTS LEFT)` : "(FULL)"}
         </button>
 
-        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-line/70 bg-white/[0.02] px-4 py-3">
+        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-line/70 hl-strong px-4 py-3">
           <Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-fog" />
           <p className="text-[12px] leading-relaxed text-fog">
             Up to <span className="text-paper">{MAX_TEAMS} teams</span>. Host controls during play —{" "}

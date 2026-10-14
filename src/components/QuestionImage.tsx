@@ -58,12 +58,12 @@ export default function QuestionImage({ src, alt = "Question image", className, 
         onClick={() => setZoom(true)}
         title="Click to enlarge"
         className={cn(
-          "glass group relative mx-auto block w-full max-w-3xl cursor-zoom-in overflow-hidden rounded-2xl p-1.5 transition hover:border-white/25",
+          "glass group relative mx-auto block w-full max-w-3xl cursor-zoom-in overflow-hidden rounded-2xl p-1.5 transition hover:hl-b",
           className
         )}
       >
         {!loaded && (
-          <div className={cn("flex w-full items-center justify-center bg-white/[0.03]", compact ? "h-40" : "h-56 md:h-72")}>
+          <div className={cn("flex w-full items-center justify-center hl-strong", compact ? "h-40" : "h-56 md:h-72")}>
             <Loader2 className="h-6 w-6 animate-spin text-fog" />
           </div>
         )}
@@ -80,13 +80,13 @@ export default function QuestionImage({ src, alt = "Question image", className, 
           draggable={false}
         />
         {loaded && (
-          <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-ink/70 px-2.5 py-1 font-mono text-[9px] tracking-[0.2em] text-fog opacity-0 backdrop-blur transition group-hover:opacity-100">
+          <span className="hl-text absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full border hl-b-soft px-2.5 py-1 font-mono text-[9px] tracking-[0.2em] backdrop-blur transition group-hover:opacity-100 opacity-0">
             <Maximize2 className="h-3 w-3" /> ENLARGE
           </span>
         )}
       </motion.button>
 
-      {/* lightbox */}
+      {/* floating lightbox — click anywhere (including the image) to exit */}
       <AnimatePresence>
         {zoom && (
           <motion.div
@@ -95,17 +95,25 @@ export default function QuestionImage({ src, alt = "Question image", className, 
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             onClick={close}
-            className="glass-strong fixed inset-0 z-[95] flex cursor-zoom-out items-center justify-center p-4 md:p-10"
+            className="fixed inset-0 z-[95] flex cursor-zoom-out items-center justify-center bg-ink/80 p-4 backdrop-blur-xl md:p-10"
           >
             <motion.img
-              initial={{ scale: 0.92, y: 16 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0 }}
-              transition={{ duration: 0.35, ease }}
+              initial={{ scale: 0.9, y: 24, opacity: 0 }}
+              animate={{
+                scale: 1,
+                y: [0, -10, 0],
+                opacity: 1,
+                transition: {
+                  scale: { duration: 0.4, ease },
+                  opacity: { duration: 0.3 },
+                  y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+                },
+              }}
+              exit={{ scale: 0.92, opacity: 0, transition: { duration: 0.25, ease } }}
               src={src}
               alt={alt}
-              onClick={(e) => e.stopPropagation()}
-              className="max-h-full max-w-full cursor-default rounded-2xl border border-white/15 object-contain shadow-2xl"
+              /* no stopPropagation — clicking the image closes it too */
+              className="max-h-full max-w-full cursor-zoom-out rounded-2xl border hl-b-soft object-contain shadow-[0_40px_90px_rgba(0,0,0,0.65)]"
               draggable={false}
             />
             <button
@@ -115,6 +123,9 @@ export default function QuestionImage({ src, alt = "Question image", className, 
             >
               <X className="h-5 w-5" />
             </button>
+            <span className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full border hl-b-soft bg-ink/70 px-4 py-2 font-mono text-[10px] tracking-[0.25em] text-fog backdrop-blur">
+              CLICK ANYWHERE OR PRESS ESC TO CLOSE
+            </span>
           </motion.div>
         )}
       </AnimatePresence>

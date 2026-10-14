@@ -156,7 +156,7 @@ export default function PodiumBoard({ standings, rounds, final, playedRounds, on
                 initial={{ opacity: 0, x: -14 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.6 + i * 0.07, ease }}
-                className={cn("border-b border-line/50 last:border-0", s.rank === 1 && "bg-white/[0.02]")}
+                className={cn("border-b border-line/50 last:border-0", s.rank === 1 && "hl-strong")}
               >
                 <td className="px-5 py-3.5">
                   <RankBadge rank={s.rank} size="sm" />
@@ -185,7 +185,7 @@ export default function PodiumBoard({ standings, rounds, final, playedRounds, on
           {standings.map((s, i) => (
             <motion.div key={s.contestant.id} className="flex items-center gap-3">
               <span className="w-24 truncate text-right font-mono text-[10px] text-fog">{s.contestant.name}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+              <div className="h-2 flex-1 overflow-hidden rounded-full hl-soft">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${(s.total / maxPts) * 100}%` }}

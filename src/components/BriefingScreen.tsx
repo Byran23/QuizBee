@@ -24,7 +24,7 @@ function Stepper({
       <button
         onClick={() => onChange(Math.max(min, value - step))}
         disabled={value <= min}
-        className="grid h-6 w-6 place-items-center rounded-md text-fog transition hover:bg-white/5 hover:text-paper disabled:cursor-not-allowed disabled:opacity-25"
+        className="grid h-6 w-6 place-items-center rounded-md text-fog transition hover:hl-soft hover:text-paper disabled:cursor-not-allowed disabled:opacity-25"
       >
         <Minus className="h-3 w-3" />
       </button>
@@ -34,7 +34,7 @@ function Stepper({
       <button
         onClick={() => onChange(Math.min(max, value + step))}
         disabled={value >= max}
-        className="grid h-6 w-6 place-items-center rounded-md text-fog transition hover:bg-white/5 hover:text-paper disabled:cursor-not-allowed disabled:opacity-25"
+        className="grid h-6 w-6 place-items-center rounded-md text-fog transition hover:hl-soft hover:text-paper disabled:cursor-not-allowed disabled:opacity-25"
       >
         <Plus className="h-3 w-3" />
       </button>
@@ -167,7 +167,7 @@ export default function BriefingScreen({ data, sourceUrl, via, onStart, onBack, 
                 />
               </div>
             </div>
-            <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="mt-4 h-1 w-full overflow-hidden rounded-full hl-soft">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(r.questions.length / data.totalQuestions) * 100}%` }}

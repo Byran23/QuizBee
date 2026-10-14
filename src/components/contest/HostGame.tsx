@@ -261,7 +261,7 @@ export default function HostGame({
                 inAward
                   ? "!border-[var(--tc)]"
                   : interactive
-                    ? "hover:border-white/30 hover:bg-white/[0.05]"
+                    ? "hover:hl-b hover:hl-strong"
                     : "cursor-default"
               )}
               style={
@@ -278,7 +278,7 @@ export default function HostGame({
               />
               <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper md:text-[13px]">{t.contestant.name}</span>
               {t.contestant.seat <= 9 && (
-                <span className="hidden shrink-0 rounded bg-white/[0.07] px-1.5 py-0.5 font-mono text-[9px] font-bold text-fog/70 lg:block" title={`Press ${t.contestant.seat} to toggle award`}>
+                <span className="hidden shrink-0 rounded hl-strong px-1.5 py-0.5 font-mono text-[9px] font-bold text-fog/70 lg:block" title={`Press ${t.contestant.seat} to toggle award`}>
                   {t.contestant.seat}
                 </span>
               )}
@@ -308,7 +308,7 @@ export default function HostGame({
         {needsOverflow && (
           <button
             onClick={() => setShowAllTeams((v) => !v)}
-            className="mx-auto mt-2 flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 font-mono text-[9px] tracking-[0.2em] text-fog transition hover:border-white/30 hover:text-paper"
+            className="mx-auto mt-2 flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 font-mono text-[9px] tracking-[0.2em] text-fog transition hover:hl-b hover:text-paper"
           >
             <ChevronDown className={cn("h-3 w-3 transition-transform", showAllTeams && "rotate-180")} />
             {showAllTeams ? "SHOW FEWER" : `+${teams.length - teamColumns * 2} MORE`}
@@ -327,11 +327,11 @@ export default function HostGame({
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.45, ease }}
               onClick={reveal}
-              className="glass group flex min-h-[22rem] w-full max-w-7xl flex-col items-center justify-center rounded-3xl transition hover:border-white/25 md:min-h-[26rem]"
+              className="glass group flex min-h-[22rem] w-full max-w-7xl flex-col items-center justify-center rounded-3xl transition hover:hl-b md:min-h-[26rem]"
             >
               <span className="font-mono text-[11px] tracking-[0.35em] text-fog md:text-[13px]">
                 QUESTION {String(qIndex + 1).padStart(2, "0")}
-                <span className="mx-2 text-white/20">|</span>
+                <span className="mx-2 hl-text">|</span>
                 <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""} · {round.def.seconds}S</span>
                 {isOpen && <span className="ml-2 text-violet">· OPEN ANSWER</span>}
                 {question.image && <span className="ml-2 text-sky">· 🖼 IMAGE</span>}
@@ -471,7 +471,7 @@ export default function HostGame({
                               "grid shrink-0 place-items-center rounded-lg font-mono font-bold transition-all",
                               revealed && isCorrect
                                 ? "h-12 w-12 bg-lime text-ink text-xl md:h-14 md:w-14 md:text-2xl"
-                                : "h-10 w-10 bg-white/5 text-fog text-base md:h-12 md:w-12 md:text-lg"
+                                : "h-10 w-10 hl-soft text-fog text-base md:h-12 md:w-12 md:text-lg"
                             )}
                           >
                             {LETTERS[i]}
@@ -586,7 +586,7 @@ export default function HostGame({
                             onClick={() => toggleAward(t.contestant.id)}
                             className={cn(
                               "flex items-center gap-2 rounded-full border px-4 py-2 font-mono text-[12px] font-bold transition active:scale-95 md:px-5 md:py-2.5 md:text-[13px]",
-                              inAward ? "text-ink" : "border-line text-fog hover:border-white/30 hover:text-paper"
+                              inAward ? "text-ink" : "border-line text-fog hover:hl-b hover:text-paper"
                             )}
                             style={inAward ? { background: t.contestant.color, borderColor: t.contestant.color } : undefined}
                           >

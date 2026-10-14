@@ -5,10 +5,18 @@ interface BackdropProps {
   bgImage?: string | null;
   bgDim?: number;
   bgBlur?: number;
+  mode?: "dark" | "light";
 }
 
 /** Fixed ambient backdrop: optional photo + colored orbs + pointer glow, all behind glass. */
-export default function Backdrop({ accent = "#B8FF3C", bgImage = null, bgDim = 55, bgBlur = 4 }: BackdropProps) {
+export default function Backdrop({
+  accent = "#B8FF3C",
+  bgImage = null,
+  bgDim = 55,
+  bgBlur = 4,
+  mode = "dark",
+}: BackdropProps) {
+  const light = mode === "light";
   const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,24 +49,28 @@ export default function Backdrop({ accent = "#B8FF3C", bgImage = null, bgDim = 5
               transform: "scale(1.06)", // hide blur edges
             }}
           />
-          <div className="absolute inset-0 bg-ink" style={{ opacity: bgDim / 100 }} aria-hidden />
+          <div
+            className="absolute inset-0"
+            style={{ background: light ? "#eef0f4" : "#07070a", opacity: bgDim / 100 }}
+            aria-hidden
+          />
         </>
       )}
       {/* accent orb */}
       <div
-        className="animate-float-slow absolute -top-52 -right-52 h-[42rem] w-[42rem] rounded-full opacity-[0.22] blur-[130px]"
-        style={{ background: accent }}
+        className="animate-float-slow absolute -top-52 -right-52 h-[42rem] w-[42rem] rounded-full blur-[130px]"
+        style={{ background: accent, opacity: light ? 0.3 : 0.22 }}
       />
-      {/* violet orb */}
+      {/* secondary orb */}
       <div
-        className="animate-float-slow absolute -bottom-60 -left-52 h-[40rem] w-[40rem] rounded-full opacity-[0.16] blur-[140px]"
-        style={{ background: "#8B7CFF", animationDelay: "-6s" }}
+        className="animate-float-slow absolute -bottom-60 -left-52 h-[40rem] w-[40rem] rounded-full blur-[140px]"
+        style={{ background: light ? "#7FB6FF" : "#8B7CFF", opacity: light ? 0.24 : 0.16, animationDelay: "-6s" }}
       />
       {/* pointer-follow glow */}
       <div
         ref={glowRef}
-        className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] rounded-full opacity-[0.08] blur-[110px] transition-transform duration-300 ease-out will-change-transform"
-        style={{ background: accent }}
+        className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] rounded-full blur-[110px] transition-transform duration-300 ease-out will-change-transform"
+        style={{ background: accent, opacity: light ? 0.14 : 0.08 }}
       />
       {/* soft vignette — tinted to the current mode */}
       <div

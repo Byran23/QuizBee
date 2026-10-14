@@ -48,20 +48,40 @@ html { scroll-behavior: smooth; }
   --color-fog: #5a6072;
   --color-paper: #11131a;
 
+  /* glass surfaces flip to frosted white */
   --box-rgb: 255 255 255;
-  --box-a: 0.72;
+  --box-a: 0.78;
   --box-strong-rgb: 255 255 255;
-  --box-a-strong: 0.88;
-  --box-border: rgba(10, 12, 20, 0.11);
+  --box-a-strong: 0.92;
+  --box-border: rgba(10, 12, 20, 0.12);
+
+  /* inverted hairlines / hovers — dark on light */
+  --hl-soft: rgba(10, 12, 20, 0.06);
+  --hl-strong: rgba(10, 12, 20, 0.12);
+  --hl-text: rgba(10, 12, 20, 0.5);
+  --sheen-c: rgba(255, 255, 255, 0.75);
+  --scrim: rgba(238, 240, 244, 0.85);
+}
+:root {
+  --hl-soft: rgba(255, 255, 255, 0.05);
+  --hl-strong: rgba(255, 255, 255, 0.12);
+  --hl-text: rgba(244, 244, 240, 0.55);
+  --sheen-c: rgba(255, 255, 255, 0.09);
+  --scrim: rgba(7, 7, 10, 0.8);
 }
 [data-mode="light"] .glass { box-shadow: 0 10px 30px rgba(18, 24, 40, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85); }
 [data-mode="light"] .glass-strong { box-shadow: 0 18px 48px rgba(18, 24, 40, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
 [data-mode="light"] .grain::after { opacity: 0.015; }
 [data-mode="light"] .text-outline { -webkit-text-stroke-color: rgba(17, 19, 26, 0.35); }
 [data-mode="light"] ::-webkit-scrollbar-thumb { background: rgba(10, 12, 20, 0.2); border-color: #eef0f4; }
-[data-mode="light"] .sheen::before {
-  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.55) 50%, transparent 60%);
-}
+
+/* utility classes that must invert with the mode */
+.hl-soft   { background-color: var(--hl-soft); }
+.hl-strong { background-color: var(--hl-strong); }
+.hl-text   { color: var(--hl-text); }
+.hl-b      { border-color: var(--hl-strong); }
+.hl-b-soft { border-color: var(--hl-soft); }
+.scrim     { background-color: var(--scrim); }
 
 body {
   background: var(--color-ink);
@@ -407,7 +427,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.09) 50%, transparent 60%);
+  background: linear-gradient(105deg, transparent 40%, var(--sheen-c) 50%, transparent 60%);
   transform: translateX(-120%);
   transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -286,9 +286,9 @@ export default function QuizScreen({
               <div className="min-w-0 flex-1">
                 <p className="font-mono text-[13px] tracking-[0.35em] text-fog">
                   QUESTION {String(index + 1).padStart(2, "0")} / {String(round.questions.length).padStart(2, "0")}
-                  <span className="mx-2 text-white/20">|</span>
+                  <span className="mx-2 hl-text">|</span>
                   <span style={{ color: round.def.color }}>{pointsFor} PT{pointsFor > 1 ? "S" : ""}</span>
-                  {isOpen && <span className="ml-2 rounded bg-white/5 px-1.5 py-0.5 text-violet">OPEN</span>}
+                  {isOpen && <span className="ml-2 rounded hl-soft px-1.5 py-0.5 text-violet">OPEN</span>}
                   {question.image && <span className="ml-2 rounded bg-sky/10 px-1.5 py-0.5 text-sky">🖼 IMAGE</span>}
                 </p>
                 <AutoFitText
@@ -387,7 +387,7 @@ export default function QuizScreen({
                         className={cn(
                           "relative flex items-center gap-5 rounded-2xl border text-left transition-colors duration-300 md:gap-6",
                           phase === "answering" &&
-                            "glass group sheen px-6 py-6 hover:translate-x-1.5 hover:border-white/25 active:scale-[0.99] md:px-7 md:py-7",
+                            "glass group sheen px-6 py-6 hover:translate-x-1.5 hover:hl-b active:scale-[0.99] md:px-7 md:py-7",
                           revealed && isCorrect &&
                             "glass-col !border-lime/70 w-full justify-center px-8 py-8 shadow-[0_0_60px_rgba(184,255,60,0.3)] md:py-9"
                         )}
@@ -408,7 +408,7 @@ export default function QuizScreen({
                             "grid shrink-0 place-items-center rounded-lg font-mono font-bold transition-all",
                             revealed && isCorrect
                               ? "h-16 w-16 bg-lime text-ink text-3xl"
-                              : "h-14 w-14 bg-white/5 text-fog text-xl group-hover:bg-white/10 group-hover:text-paper"
+                              : "h-14 w-14 hl-soft text-fog text-xl group-hover:hl-soft group-hover:text-paper"
                           )}
                         >
                           {letters[i]}

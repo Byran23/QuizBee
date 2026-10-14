@@ -27,7 +27,7 @@ export default function RankBadge({ rank, size = "md", className }: Props) {
     return (
       <span
         className={cn(
-          "grid shrink-0 place-items-center rounded-full border border-line bg-white/5 font-mono font-bold text-fog",
+          "grid shrink-0 place-items-center rounded-full border border-line hl-soft font-mono font-bold text-fog",
           dim, className
         )}
       >

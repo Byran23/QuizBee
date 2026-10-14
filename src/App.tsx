@@ -205,6 +205,7 @@ export default function App() {
         bgImage={theme.bgImage}
         bgDim={theme.bgDim}
         bgBlur={theme.bgBlur}
+        mode={theme.mode}
       />
       <FullscreenToggle />
       <ThemePanel

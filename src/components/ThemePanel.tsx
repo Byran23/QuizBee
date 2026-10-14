@@ -36,7 +36,7 @@ function Slider({
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-2 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-[var(--color-lime)]"
+        className="mt-2 h-1.5 w-full cursor-pointer appearance-none rounded-full hl-soft accent-[var(--color-lime)]"
       />
     </div>
   );
@@ -97,7 +97,7 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-[85] bg-ink/40 backdrop-blur-[2px]"
+              className="scrim fixed inset-0 z-[85] opacity-50 backdrop-blur-[2px]"
             />
             <div className="pointer-events-none fixed inset-0 z-[90] grid place-items-center p-4">
               <motion.aside
@@ -114,7 +114,7 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
                 </span>
                 <button
                   onClick={() => setOpen(false)}
-                  className="grid h-7 w-7 place-items-center rounded-full text-fog transition hover:bg-white/5 hover:text-paper"
+                  className="grid h-7 w-7 place-items-center rounded-full text-fog transition hover:hl-soft hover:text-paper"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -194,7 +194,7 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
                       key={m}
                       onClick={() => onChange({ mode: m })}
                       className={cn(
-                        "glass flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 transition hover:border-white/25",
+                        "glass flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 transition hover:hl-b",
                         active && "!border-[var(--color-lime)]"
                       )}
                     >
@@ -215,7 +215,7 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
                       key={s.key}
                       onClick={() => onChange({ skin: s.key })}
                       className={cn(
-                        "glass flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left transition hover:border-white/25",
+                        "glass flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left transition hover:hl-b",
                         active && "!border-[var(--color-lime)]"
                       )}
                     >
@@ -243,7 +243,7 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
                       key={mode}
                       onClick={() => onChange({ timerMode: mode })}
                       className={cn(
-                        "glass flex flex-col items-start gap-1 rounded-xl px-3 py-2.5 transition hover:border-white/25",
+                        "glass flex flex-col items-start gap-1 rounded-xl px-3 py-2.5 transition hover:hl-b",
                         active && "!border-[var(--color-lime)]"
                       )}
                     >
@@ -269,7 +269,7 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
                       key={p.key}
                       onClick={() => onChange({ paletteKey: p.key, custom: null })}
                       className={cn(
-                        "glass flex items-center gap-2 rounded-xl px-2.5 py-2 transition hover:border-white/25",
+                        "glass flex items-center gap-2 rounded-xl px-2.5 py-2 transition hover:hl-b",
                         active && "!border-[var(--color-lime)]"
                       )}
                     >
