@@ -64,6 +64,73 @@ function bell(freq: number, start: number, dur = 1.6, gain = 0.13) {
   tone(freq * 4.1, start, 0.055, "square", gain * 0.18);
 }
 
+/* ------------------------------------------------------------------ */
+/*  Time-up sounds — selectable in Customize                           */
+/* ------------------------------------------------------------------ */
+
+export type TimeUpSound = "bell" | "buzzer" | "chime" | "alarm" | "gong" | "airhorn" | "none";
+
+export const TIME_UP_SOUNDS: { key: TimeUpSound; name: string; blurb: string }[] = [
+  { key: "bell", name: "Bell", blurb: "Single clear ring" },
+  { key: "buzzer", name: "Buzzer", blurb: "Harsh game-show blat" },
+  { key: "chime", name: "Chime", blurb: "Gentle 3-note fall" },
+  { key: "alarm", name: "Alarm", blurb: "Urgent beeping" },
+  { key: "gong", name: "Gong", blurb: "Deep resonant strike" },
+  { key: "airhorn", name: "Air Horn", blurb: "Stadium blast" },
+  { key: "none", name: "Silent", blurb: "No sound" },
+];
+
+const timeUpVariants: Record<TimeUpSound, () => void> = {
+  bell() {
+    bell(1318.5, 0, 2.6, 0.16); // E6, long tail
+  },
+  buzzer() {
+    tone(165, 0, 0.42, "sawtooth", 0.13);
+    tone(110, 0, 0.42, "square", 0.1);
+    tone(164, 0.012, 0.42, "sawtooth", 0.1); // detune = grind
+    tone(165, 0.52, 0.6, "sawtooth", 0.13);
+    tone(110, 0.52, 0.6, "square", 0.1);
+    tone(330, 1.18, 0.75, "sawtooth", 0.07, 98);
+  },
+  chime() {
+    bell(1046.5, 0, 1.4, 0.12);
+    bell(830.6, 0.22, 1.5, 0.11);
+    bell(659.25, 0.44, 2.2, 0.12);
+  },
+  alarm() {
+    for (let i = 0; i < 5; i++) {
+      tone(1046.5, i * 0.22, 0.1, "square", 0.1);
+      tone(1318.5, i * 0.22 + 0.1, 0.1, "square", 0.1);
+    }
+  },
+  gong() {
+    bell(146.8, 0, 3.4, 0.2);
+    bell(220, 0.03, 3, 0.1);
+    tone(98, 0, 3.2, "sine", 0.1);
+  },
+  airhorn() {
+    [0, 0.26].forEach((t) => {
+      tone(233, t, 0.22, "sawtooth", 0.1, 247);
+      tone(311, t, 0.22, "sawtooth", 0.09, 330);
+      tone(466, t, 0.22, "square", 0.05);
+    });
+    tone(233, 0.54, 0.75, "sawtooth", 0.11, 220);
+    tone(311, 0.54, 0.75, "sawtooth", 0.1, 294);
+  },
+  none() {
+    /* silent */
+  },
+};
+
+let timeUpChoice: TimeUpSound = "bell";
+export function setTimeUpSound(k: TimeUpSound) {
+  timeUpChoice = k;
+}
+/** Preview a specific time-up sound (used by the picker). */
+export function playTimeUp(k: TimeUpSound) {
+  timeUpVariants[k]?.();
+}
+
 export const sfx = {
   tick() {
     tone(880, 0, 0.07, "square", 0.05);
@@ -81,8 +148,7 @@ export const sfx = {
     tone(147, 0.12, 0.3, "sawtooth", 0.07, 98);
   },
   timeUp() {
-    // time-up bell: a single clear ring with a long tail
-    bell(1318.5, 0, 2.6, 0.16); // E6
+    timeUpVariants[timeUpChoice]?.();
   },
   advance() {
     tone(392, 0, 0.06, "sine", 0.07, 523);

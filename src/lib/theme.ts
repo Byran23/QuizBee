@@ -19,6 +19,8 @@ export const PALETTES: Palette[] = [
   { key: "candy",   name: "Candy",    accent: "#FF7AC8", secondary: "#7AE7FF", warn: "#FFE066", danger: "#FF5C5C", extra: "#B18CFF" },
 ];
 
+import type { TimeUpSound } from "./sound";
+
 export type SkinKey = "basic" | "futuristic" | "mechanical" | "cyber" | "child";
 
 export const SKINS: { key: SkinKey; name: string; blurb: string }[] = [
@@ -42,6 +44,8 @@ export interface ThemeState {
   /** auto = timer starts on reveal · manual = host reads first, then starts it */
   timerMode: TimerMode;
   mode: Mode;
+  /** which sound plays when the countdown hits zero */
+  timeUpSound: TimeUpSound;
   /** hero title — "QUIZ" + accent dot + "BEE" by default */
   titleA: string;
   titleB: string;
@@ -64,6 +68,7 @@ export const DEFAULT_THEME: ThemeState = {
   skin: "futuristic",
   timerMode: "auto",
   mode: "dark",
+  timeUpSound: "bell",
   titleA: "QUIZ",
   titleB: "BEE",
   marquee: [

@@ -11,7 +11,7 @@ import HostGame from "./components/contest/HostGame";
 import PodiumBoard from "./components/contest/PodiumBoard";
 import { AnswerRecord, AwardEvent, Contestant, FetchResult, QuizMode, TeamScore } from "./lib/types";
 import { recomputeTotals } from "./lib/sheets";
-import { sfx } from "./lib/sound";
+import { sfx, setTimeUpSound } from "./lib/sound";
 import FullscreenToggle from "./components/FullscreenToggle";
 import ThemePanel from "./components/ThemePanel";
 import { ThemeState, loadTheme, saveTheme, resolvePalette, applyPalette, applySkin, applyMode, applySurface } from "./lib/theme";
@@ -57,6 +57,10 @@ export default function App() {
   useEffect(() => {
     applySurface(theme);
   }, [theme.qColor, theme.boxColor, theme.boxFill, theme.mode, theme.skin]);
+
+  useEffect(() => {
+    setTimeUpSound(theme.timeUpSound);
+  }, [theme.timeUpSound]);
 
   // never let the theme window overlap the live show
   useEffect(() => {
@@ -235,6 +239,8 @@ export default function App() {
               data={result.data}
               sourceUrl={sourceUrl}
               via={result.via}
+              timerMode={theme.timerMode}
+              onTimerModeChange={(m) => updateTheme({ timerMode: m })}
               onStart={handleModeStart}
               onBack={() => setView("setup")}
               onUpdateRound={handleUpdateRound}

@@ -1,6 +1,10 @@
 import { motion } from "framer-motion";
-import { Sheet, Timer, Trophy, ListChecks, FastForward, RotateCcw, Sparkles, Swords, UserRound, Minus, Plus, SlidersHorizontal } from "lucide-react";
+import {
+  Sheet, Timer, Trophy, ListChecks, FastForward, RotateCcw, Sparkles, Swords, UserRound,
+  Minus, Plus, SlidersHorizontal, Timer as TimerIcon, Zap, Check,
+} from "lucide-react";
 import { QuizData, QuizMode } from "../lib/types";
+import { cn } from "../utils/cn";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -8,6 +12,8 @@ interface Props {
   data: QuizData;
   sourceUrl: string | null;
   via: "csv" | "json" | "demo";
+  timerMode: "auto" | "manual";
+  onTimerModeChange: (mode: "auto" | "manual") => void;
   onStart: (mode: QuizMode) => void;
   onBack: () => void;
   onUpdateRound: (roundKey: string, patch: { points?: number; seconds?: number }) => void;
@@ -42,7 +48,9 @@ function Stepper({
   );
 }
 
-export default function BriefingScreen({ data, sourceUrl, via, onStart, onBack, onUpdateRound }: Props) {
+export default function BriefingScreen({
+  data, sourceUrl, via, timerMode, onTimerModeChange, onStart, onBack, onUpdateRound,
+}: Props) {
   const mins = Math.round(data.estimatedSeconds / 60);
 
   return (
@@ -182,9 +190,50 @@ export default function BriefingScreen({ data, sourceUrl, via, onStart, onBack, 
                 style={{ background: r.def.color }}
               />
             </div>
-          </motion.div>
+           </motion.div>
         ))}
       </div>
+
+      {/* timer start mode */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.65, ease }}
+        className="glass mt-4 w-full max-w-4xl rounded-2xl p-5"
+      >
+        <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] text-fog">
+          <TimerIcon className="h-3.5 w-3.5 text-sky" />
+          WHEN DOES THE COUNTDOWN START?
+        </p>
+        <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+          {([
+            ["auto", "On reveal", "The clock starts the moment the question appears.", Zap],
+            ["manual", "After reading", "Question shows with the clock paused — you start it when ready.", TimerIcon],
+          ] as const).map(([m, label, blurb, Icon]) => {
+            const active = timerMode === m;
+            return (
+              <button
+                key={m}
+                onClick={() => onTimerModeChange(m)}
+                className={cn(
+                  "glass flex items-start gap-3 rounded-xl p-4 text-left transition hover:hl-b",
+                  active && "!border-sky/70"
+                )}
+                style={active ? { boxShadow: "0 0 26px rgba(92,210,255,0.18)" } : undefined}
+              >
+                <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", active ? "text-sky" : "text-fog")} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 font-mono text-[12px] font-bold tracking-wider text-paper">
+                    {label}
+                    {active && <Check className="h-3.5 w-3.5 text-sky" strokeWidth={3} />}
+                  </span>
+                  <span className="mt-1 block text-[12px] leading-snug text-fog">{blurb}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </motion.div>
 
       {/* ctas */}
       <motion.div

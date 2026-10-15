@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Palette as PaletteIcon, X, ImagePlus, Trash2, Check, Sun, Droplets, RotateCcw,
-  Layers, Zap, Timer as TimerIcon, Moon, SunMedium, Blend, Plus,
+  Layers, Moon, SunMedium, Blend, Plus, Volume2,
 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { PALETTES, SKINS, ThemeState, DEFAULT_THEME, DEFAULT_MARQUEE, fileToDataUrl, resolvePalette } from "../lib/theme";
+import { TIME_UP_SOUNDS, playTimeUp } from "../lib/sound";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -231,32 +232,29 @@ export default function ThemePanel({ theme, onChange, open, onOpenChange, showLa
               </div>
 
               {/* timer start mode */}
-              <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">TIMER START</p>
+              <p className="mt-5 font-mono text-[10px] tracking-[0.25em] text-fog">TIME-UP SOUND</p>
               <div className="mt-2.5 grid grid-cols-2 gap-2">
-                {([
-                  ["auto", "On reveal", Zap],
-                  ["manual", "After reading", TimerIcon],
-                ] as const).map(([mode, label, Icon]) => {
-                  const active = theme.timerMode === mode;
+                {TIME_UP_SOUNDS.map((snd) => {
+                  const active = theme.timeUpSound === snd.key;
                   return (
                     <button
-                      key={mode}
-                      onClick={() => onChange({ timerMode: mode })}
+                      key={snd.key}
+                      onClick={() => { onChange({ timeUpSound: snd.key }); playTimeUp(snd.key); }}
+                      title={snd.blurb + ' — click to preview'}
                       className={cn(
-                        "glass flex flex-col items-start gap-1 rounded-xl px-3 py-2.5 transition hover:hl-b",
+                        "glass flex items-center gap-2 rounded-xl px-2.5 py-2 text-left transition hover:hl-b",
                         active && "!border-[var(--color-lime)]"
                       )}
                     >
-                      <Icon className={cn("h-3.5 w-3.5", active ? "text-lime" : "text-fog")} />
-                      <span className="font-mono text-[10px] tracking-wider text-paper">{label}</span>
+                      <Volume2 className={cn("h-3.5 w-3.5 shrink-0", active ? "text-lime" : "text-fog")} />
+                      <span className="min-w-0 flex-1 truncate font-mono text-[10px] tracking-wider text-paper">{snd.name}</span>
+                      {active && <Check className="h-3 w-3 shrink-0 text-lime" strokeWidth={3} />}
                     </button>
                   );
                 })}
               </div>
               <p className="mt-2 text-[10px] leading-snug text-fog/70">
-                {theme.timerMode === "manual"
-                  ? "Question appears with the clock paused — press Space (or the button) to start it once you’ve finished reading."
-                  : "The countdown begins the moment the question is revealed."}
+                Click any option to hear it. Timer start mode is set on the round screen.
               </p>
 
               {/* palettes */}
