@@ -1,5 +1,26 @@
 import { QuizData } from "./types";
-import { buildQuizData } from "./sheets";
+import { buildQuizData, parseSheetInput, fetchQuizFromSheet } from "./sheets";
+
+/** The demo set is pulled from this sheet when it's publicly shared. */
+export const DEMO_SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/1Gi8t36BZH5Bqwfhqu9vvA_ZqfFSuWlvieveArvzMFEA";
+
+/**
+ * Load the demo from the Google Sheet above.
+ * Falls back to the built-in set if the sheet isn't shared / is unreachable.
+ */
+export async function loadDemoQuiz(): Promise<{ data: QuizData; fromSheet: boolean }> {
+  const ref = parseSheetInput(DEMO_SHEET_URL);
+  if (ref) {
+    try {
+      const res = await fetchQuizFromSheet(ref);
+      return { data: { ...res.data, sourceLabel: "Demo Sheet" }, fromSheet: true };
+    } catch {
+      /* private or offline — fall through to the bundled set */
+    }
+  }
+  return { data: demoQuiz(), fromSheet: false };
+}
 
 const DEMO_ROWS = [
   // ---- EASY (1 pt · 15s) ----

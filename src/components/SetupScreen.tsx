@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { parseSheetInput, fetchQuizFromSheet, SheetFetchError } from "../lib/sheets";
-import { demoQuiz } from "../lib/demo";
+import { loadDemoQuiz, DEMO_SHEET_URL } from "../lib/demo";
 import { FetchResult } from "../lib/types";
 
 interface Props {
@@ -38,11 +38,20 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [recents, setRecents] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
+    try {
+      const saved = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+      const valid = Array.isArray(saved) ? saved.filter((r): r is string => typeof r === "string") : [];
+      // Keep the provided sample pinned in Recent Sheets without duplicating it.
+      return [DEMO_SHEET_URL, ...valid.filter((r) => r !== DEMO_SHEET_URL)].slice(0, 4);
+    } catch {
+      return [DEMO_SHEET_URL];
+    }
   });
 
   const remember = (u: string) => {
-    const next = [u, ...recents.filter((r) => r !== u)].slice(0, 4);
+    const next = u === DEMO_SHEET_URL
+      ? [DEMO_SHEET_URL, ...recents.filter((r) => r !== DEMO_SHEET_URL)].slice(0, 4)
+      : [u, DEMO_SHEET_URL, ...recents.filter((r) => r !== u && r !== DEMO_SHEET_URL)].slice(0, 4);
     setRecents(next);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   };
@@ -71,10 +80,14 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
     }
   };
 
-  const runDemo = () => {
+  const runDemo = async () => {
     setStatus("loading");
-    setPhase("Summoning the demo set…");
-    setTimeout(() => onReady({ data: demoQuiz(), via: "demo" }, null), 600);
+    setError(null);
+    setPhase("Loading the demo sheet…");
+    const { data, fromSheet } = await loadDemoQuiz();
+    if (!fromSheet) setPhase("Demo sheet unavailable — using the built-in set…");
+    await new Promise((r) => setTimeout(r, fromSheet ? 300 : 700));
+    onReady({ data, via: "demo" }, fromSheet ? DEMO_SHEET_URL : null);
   };
 
   return (
@@ -266,20 +279,34 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                   <History className="h-3.5 w-3.5" /> RECENT SHEETS
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {recents.map((r) => (
+                  {recents.map((r) => {
+                    const isSample = r === DEMO_SHEET_URL;
+                    return (
                     <button
                       key={r}
                       onClick={() => { setUrl(r); load(r); }}
+                      title={r}
                       className="group flex max-w-full items-center gap-2 rounded-full border border-line px-3.5 py-1.5 font-mono text-[11px] text-fog transition hover:border-lime/40 hover:text-paper"
                     >
-                      <span className="max-w-52 truncate">{r.replace(/^https?:\/\//, "").slice(0, 42)}…</span>
+                      {isSample && (
+                        <span className="rounded-full bg-lime/15 px-1.5 py-0.5 text-[8px] font-bold tracking-wider text-lime">
+                          SAMPLE
+                        </span>
+                      )}
+                      <span className="max-w-52 truncate">
+                        {isSample ? "Quiz Bee demo sheet" : `${r.replace(/^https?:\/\//, "").slice(0, 42)}…`}
+                      </span>
                       <ArrowRight className="h-3 w-3 text-lime opacity-0 transition group-hover:opacity-100" />
                     </button>
-                  ))}
+                    );
+                  })}
                   <button
-                    onClick={() => { setRecents([]); localStorage.removeItem(RECENT_KEY); }}
+                    onClick={() => {
+                      setRecents([DEMO_SHEET_URL]);
+                      localStorage.setItem(RECENT_KEY, JSON.stringify([DEMO_SHEET_URL]));
+                    }}
                     className="grid h-7 w-7 place-items-center rounded-full border border-line text-fog transition hover:border-rose/50 hover:text-rose"
-                    title="Clear history"
+                    title="Clear history (keeps sample)"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -296,10 +323,10 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                 NO SHEET HANDY?
               </div>
               <p className="mt-4 text-sm leading-relaxed text-fog">
-                Take the built-in 12-question arena demo for a spin — four rounds, full
-                scoring, instant champion verdict.
+                Loads the demo Google Sheet — multiple choice, open answers, images and
+                custom timers across four rounds.
               </p>
-              <div className="mt-5 flex gap-4 font-mono text-[11px] text-fog">
+              <div className="mt-5 flex flex-wrap gap-4 font-mono text-[11px] text-fog">
                 <span className="flex items-center gap-1.5"><Layers3 className="h-3.5 w-3.5 text-lime" /> 4 rounds</span>
                 <span className="flex items-center gap-1.5"><Clock3 className="h-3.5 w-3.5 text-sky" /> ~4 min</span>
               </div>
