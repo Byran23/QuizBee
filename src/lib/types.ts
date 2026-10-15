@@ -38,6 +38,8 @@ export interface QuizData {
   totalPoints: number;
   estimatedSeconds: number;
   skippedRows: number;
+  /** rows dropped because the 300-question cap was reached */
+  truncatedRows: number;
   sourceLabel: string;
 }
 

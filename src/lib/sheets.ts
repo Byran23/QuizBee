@@ -30,6 +30,9 @@ export function parseSheetInput(input: string): SheetRef | null {
 
 export class SheetFetchError extends Error {}
 
+/** Hard ceiling on how many questions a single quiz can hold. */
+export const MAX_QUESTIONS = 300;
+
 async function fetchText(url: string, ms = 15000): Promise<string> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
@@ -408,6 +411,10 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
     );
   }
 
+  // enforce the 300-question ceiling — keep the first 300, report the rest
+  const truncatedRows = Math.max(0, raw.length - MAX_QUESTIONS);
+  if (truncatedRows > 0) raw = raw.slice(0, MAX_QUESTIONS);
+
   const questions: Question[] = [];
   let droppedBadAnswers = 0;
 
@@ -462,6 +469,7 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
     totalPoints,
     estimatedSeconds,
     skippedRows: skipped + droppedBadAnswers,
+    truncatedRows,
     sourceLabel,
   };
 }

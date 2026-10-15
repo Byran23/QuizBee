@@ -382,7 +382,7 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                   </div>
                   <ul className="space-y-3.5 text-[13px] leading-relaxed text-fog">
                     {[
-                      ["One header row. A Question column is required — everything else is optional magic.", true],
+                      ["One header row. A Question column is required — everything else is optional magic. Up to 300 questions per sheet.", true],
                       ["Options as columns A–F (or a single Options column split with | ). Leave options empty for open verbal questions — the Answer is simply revealed.", true],
                       ["Answer accepts a letter (B), a number (2), the exact option text — or any free text for open questions.", true],
                       ["Round groups questions: Easy 1pt · Average 2pts · Difficult 3pts · Clincher 5pts. Blank round = one general round.", true],
