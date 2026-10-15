@@ -294,7 +294,7 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                         </span>
                       )}
                       <span className="max-w-52 truncate">
-                        {isSample ? "Quiz Bee demo sheet" : `${r.replace(/^https?:\/\//, "").slice(0, 42)}…`}
+                        {isSample ? "Quiz Bee Mock Demo" : `${r.replace(/^https?:\/\//, "").slice(0, 42)}…`}
                       </span>
                       <ArrowRight className="h-3 w-3 text-lime opacity-0 transition group-hover:opacity-100" />
                     </button>
