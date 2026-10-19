@@ -1,5 +1,6 @@
 import { Question, QuizData, FetchResult } from "./types";
 import { buildRounds } from "./rounds";
+import { typeIsTrueFalse } from "./qtypes";
 
 /* ------------------------------------------------------------------ */
 /*  URL parsing                                                        */
@@ -188,14 +189,19 @@ export function parseCsv(text: string): string[][] {
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 const MATCHERS = {
-  question: /^(q|question|questiontext|prompt|item|query)$/i,
-  answer: /^(answer|correct|correctanswer|correctoption|key|ans|solution)$/i,
-  round: /^(round|difficulty|level|category|type|stage|group|section)$/i,
-  points: /^(points|pts|score|value|weight)$/i,
-  explanation: /^(explanation|why|explain|solutiontext|note|notes|rationale|hint)$/i,
-  image: /^(image|imageurl|img|imgurl|picture|pictureurl|photo|photourl|imagelink)$/i,
-  seconds: /^(time|timer|seconds|secs|sec|timelimit|duration|countdown|timeallotment|allotment)$/i,
-  optionsCombined: /^(options|choices|choiceslist)$/i,
+  // Optional plurals + common real-world variants so ordinary headers match.
+  question: /^(q|qs|questions?|questiontext|questiontexts|prompts?|items?|queries|tanong|quizquestion)$/i,
+  answer: /^(answers?|correct|correctanswers?|correctoptions?|key|keyanswer|keys|ans|solution|solutions?|sagot)$/i,
+  // NOTE: "type" belongs to the question-type column, not the round column.
+  round: /^(rounds?|difficulty|difficulties|levels?|category|categories|stage|stages?|groups?|sections?)$/i,
+  qtype: /^(type|types|typeofquestion|typeofquestions|questiontype|questiontypes|qtype|format|kind|itemtype)$/i,
+  points: /^(points?|pts|score|scores?|value|values?|weight|weights?)$/i,
+  explanation: /^(explanations?|why|explain|solutiontext|notes?|rationale|hints?)$/i,
+  image: /^(images?|imageurls?|imgs?|imgurls?|pictures?|pictureurls?|photos?|photourls?|imagelinks?|imagelink)$/i,
+  seconds: /^(times?|timers?|seconds?|secs?|sec|timelimits?|durations?|countdowns?|timeallotments?|allotments?)$/i,
+  optionsCombined: /^(options?|choices?|choiceslist)$/i,
+  // numbering / ID columns are recognised so they're never mistaken for content
+  numbering: /^(no|nos|number|numbers?|num|#|itemno|itemnumber|qno|questionno|questionnumber|id|seq|row|order)$/i,
   optionIndexed: /^([a-f])$/i,
   optionLong: /^(option|choice|choice|opt|a)([a-f]|[1-6])$/i,
 };
@@ -261,15 +267,47 @@ function letterColIndex(header: string): number | null {
   return null;
 }
 
-function resolveAnswerIndex(raw: string, options: string[]): number {
-  const a = raw.trim();
+/** Strip noise commonly typed into answer cells: "Answer: B", "Ans - True", "(C)". */
+export function cleanAnswerCell(raw: string): string {
+  return raw
+    .replace(/^\s*(?:correct\s*)?(?:answer|ans|sagot|key)\s*[:=\-–]\s*/i, "")
+    .replace(/^\s*[([{]\s*/, "")
+    .replace(/\s*[)\]}]\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function resolveAnswerIndex(rawInput: string, options: string[]): number {
+  const a = cleanAnswerCell(rawInput);
+
+  // True/False shorthand: T / F / yes / no / tama / mali
+  const isTF =
+    options.length === 2 &&
+    /^(true|false)$/i.test(options[0]) &&
+    /^(true|false)$/i.test(options[1]);
+  if (isTF) {
+    const truthy = /^(t|true|yes|y|tama|totoo|1)$/i.test(a);
+    const falsy = /^(f|false|no|n|mali|0)$/i.test(a);
+    if (truthy || falsy) {
+      const wantTrue = truthy;
+      const idx = options.findIndex((o) => /^true$/i.test(o));
+      const trueIdx = idx >= 0 ? idx : 0;
+      return wantTrue ? trueIdx : trueIdx === 0 ? 1 : 0;
+    }
+  }
+  const clean0 = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  // An exact option-text match always wins — critical when the options are
+  // themselves letters or numbers (e.g. answer "4" with options 3/4/5/6).
+  const exact = options.findIndex((o) => clean0(o) === clean0(a));
+  if (exact >= 0) return exact;
+
   // letter  "B"  / "b"  / "B)" / "B."
   const lm = a.match(/^([A-Fa-f])[).:;]?\s*$/);
   if (lm) {
     const idx = lm[1].toUpperCase().charCodeAt(0) - 65;
     if (idx < options.length) return idx;
   }
-  // number "1"-"6"
+  // number "1"-"6" (positional, only when no option literally equals it)
   const nm = a.match(/^([1-6])\)?\s*$/);
   if (nm) {
     const idx = parseInt(nm[1]) - 1;
@@ -300,6 +338,7 @@ interface RawRow {
   options: string[];
   answerRaw: string;
   round: string;
+  qtype?: string;
   points: number | null;
   /** per-question seconds; null => use the round default */
   seconds?: number | null;
@@ -308,18 +347,52 @@ interface RawRow {
 }
 
 export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
-  const header = rows[0].map((h) => norm(h));
-  const col: Record<string, number> = {};
+  // Find the header row: the FIRST row that reads like a header.
+  // Only completely blank / decorative lead-in rows are skipped before it.
+  // If nothing looks like a header we default to row 1 — we never scan past
+  // data rows, because that would swallow questions.
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const cells = rows[i].map((c) => norm(c));
+    if (cells.filter((c) => c !== "").length === 0) continue; // fully blank only
+    const looksLikeHeader = cells.some(
+      (c) =>
+        MATCHERS.question.test(c) ||
+        MATCHERS.answer.test(c) ||
+        MATCHERS.round.test(c) ||
+        MATCHERS.points.test(c) ||
+        MATCHERS.explanation.test(c) ||
+        MATCHERS.image.test(c) ||
+        MATCHERS.seconds.test(c) ||
+        MATCHERS.optionsCombined.test(c) ||
+        letterColIndex(c) !== null
+    );
+    if (looksLikeHeader) {
+      headerIdx = i;
+      break;
+    }
+  }
+
+  // No recognizable header anywhere → treat EVERY row as data so nothing is
+  // swallowed, and fall back to positional columns (col 1 = question, col 2 = answer).
+  const hasHeader = headerIdx >= 0;
+  const header = hasHeader
+    ? rows[headerIdx].map((h) => norm(h))
+    : rows[0].map(() => ""); // no labels — columns are matched positionally below
+  const body = hasHeader ? rows.slice(headerIdx + 1) : rows;
+  const col: Record<string, number | undefined> = {};
   const optionCols: { index: number; order: number }[] = [];
 
   header.forEach((h, i) => {
     if (MATCHERS.question.test(h)) col.question = i;
     else if (MATCHERS.answer.test(h)) col.answer = i;
+    else if (MATCHERS.qtype.test(h)) col.qtype = i;
     else if (MATCHERS.round.test(h)) col.round = i;
     else if (MATCHERS.points.test(h) && col.points === undefined) col.points = i;
     else if (MATCHERS.explanation.test(h)) col.explanation = i;
     else if (MATCHERS.image.test(h)) col.image = i;
     else if (MATCHERS.seconds.test(h) && col.seconds === undefined) col.seconds = i;
+    else if (MATCHERS.numbering.test(h)) col.numbering = i; // claimed, never content
     else if (MATCHERS.optionsCombined.test(h)) col.options = i;
     else {
       const li = letterColIndex(h);
@@ -327,26 +400,85 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
     }
   });
 
+  const widest = Math.max(
+    header.length,
+    body.reduce((m, rw) => Math.max(m, rw.length), 0),
+    1
+  );
+
+  /** Rows carrying real text in a column. */
+  const coverage = (i: number) =>
+    body.reduce((n, rw) => n + ((rw[i]?.trim() ?? "") !== "" ? 1 : 0), 0);
+  const textWeight = (i: number) =>
+    body.reduce((s, rw) => s + (rw[i]?.trim().length ?? 0), 0);
+
+  const claimedCols = () =>
+    new Set<number>(
+      [
+        col.answer, col.round, col.qtype, col.points, col.explanation, col.image,
+        col.seconds, col.options, col.numbering,
+        ...optionCols.map((o) => o.index),
+      ].filter((v): v is number => v !== undefined)
+    );
+
+  // A labelled column that turns out to be empty would blank every question,
+  // so verify it actually holds content before trusting it.
+  if (col.question !== undefined && coverage(col.question) === 0) {
+    col.question = undefined;
+  }
+
+  // Headerless sheet: column 1 is the question, column 2 the answer.
+  if (!hasHeader) {
+    if (col.question === undefined) col.question = 0;
+    if (col.answer === undefined && widest >= 2) col.answer = 1;
+  }
+
+  // No usable Question header → infer it from content. Coverage wins first
+  // (questions fill nearly every row), then total text length breaks ties.
   if (col.question === undefined) {
+    const claimed = claimedCols();
+    let best = -1;
+    let bestScore = 0;
+    for (let i = 0; i < widest; i++) {
+      if (claimed.has(i)) continue;
+      const score = coverage(i) * 100000 + textWeight(i);
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    if (best >= 0) col.question = best;
+  }
+
+  if (col.question === undefined && col.image === undefined) {
     throw new SheetFetchError(
-      "No “Question” column found. Add a header row with columns like: Question, A, B, C, D, Answer."
+      "Couldn’t find any question content in this sheet. Add a header row with columns like: Question, A, B, C, D, Answer."
     );
   }
 
   const raw: RawRow[] = [];
-  let skipped = 0;
+  const stats = { blank: 0, recoveredQuestion: 0, noAnswer: 0 };
 
-  for (let r = 1; r < rows.length; r++) {
-    const cells = rows[r];
-    const get = (i: number | undefined) => (i === undefined ? "" : cells[i] ?? "");
-    let question = get(col.question).trim();
-    const image = normalizeImageUrl(get(col.image));
-    if (!question && !image) {
-      skipped++;
-      continue;
+  for (let r = 0; r < body.length; r++) {
+    const cells = body[r];
+    // Resilience: when a row has MORE cells than the header, the question text
+    // contained commas but wasn't quoted (raw CSV pasted in, not exported by
+    // Sheets). Re-join the fragments around the question column so the
+    // sentence isn't truncated mid-way.
+    let effectiveCells = cells;
+    const headerWidth = rows[headerIdx]?.length ?? 0;
+    const overflow = cells.length - headerWidth;
+    if (headerWidth > 0 && overflow > 0 && col.question !== undefined) {
+      const qIdx = col.question;
+      effectiveCells = cells
+        .slice(0, qIdx)
+        .concat([cells.slice(qIdx, qIdx + overflow + 1).join(",")])
+        .concat(cells.slice(qIdx + overflow + 1));
     }
-    // image-only row → sensible default prompt
-    if (!question && image) question = "What is shown in the image?";
+
+    const get = (i: number | undefined) => (i === undefined ? "" : effectiveCells[i] ?? "");
+    let question = (col.question === undefined ? "" : effectiveCells[col.question] ?? "").trim();
+
     let options: string[] = [];
     if (optionCols.length >= 2) {
       options = optionCols
@@ -356,37 +488,94 @@ export function normalizeRows(rows: string[][], sourceLabel: string): QuizData {
     } else if (col.options !== undefined) {
       options = splitOptions(get(col.options));
     }
+
+    // The answer cell is kept EXACTLY as written — nothing is stripped or
+    // rewritten. A separate cleaned copy is used only for matching options.
     const answerRaw = get(col.answer).trim();
-    // MC needs 2+ options; open questions just need an answer text.
-    // If there's exactly one option, treat it as open with the option as fallback answer.
-    const isOpen = options.length < 2;
-    if (isOpen && !answerRaw && options.length === 0) {
-      skipped++; // no answer at all → drop the row
-      continue;
+    const qtype = get(col.qtype).trim();
+    const explanation = get(col.explanation).trim();
+    const image = normalizeImageUrl(get(col.image));
+
+    // Never drop a row that carries content. If the Question cell is blank,
+    // recover the text from wherever it actually lives in that row.
+    if (!question) {
+      // Recover from another cell, but never from the answer or option
+      // columns — that would show the answer twice instead of a question.
+      const skipCols = new Set([
+        col.image, col.round, col.qtype, col.points, col.seconds,
+        col.explanation, col.numbering, col.answer,
+        ...optionCols.map((o) => o.index),
+      ].filter((v): v is number => v !== undefined));
+
+      const fallback = cells
+        .map((c, i) => ({ c: c?.trim() ?? "", i }))
+        .filter(({ c, i }) => c !== "" && !skipCols.has(i))
+        .sort((a, b) => b.c.length - a.c.length)[0]?.c;
+
+      if (fallback) {
+        question = fallback;
+        stats.recoveredQuestion++;
+      } else if (image) {
+        question = "What is shown in the image?";
+        stats.recoveredQuestion++;
+      } else if (answerRaw || options.length > 0) {
+        // Row has content but no question text anywhere — keep it, labelled.
+        question = `(No question text in row ${r + (hasHeader ? headerIdx + 2 : 1)} — answer shown below)`;
+        stats.recoveredQuestion++;
+      } else {
+        stats.blank++; // genuinely empty row — nothing to show
+        continue;
+      }
     }
+
+    // A True/False type with no options → auto-build the two choices.
+    if (options.length < 2 && typeIsTrueFalse(qtype)) {
+      options = ["True", "False"];
+    }
+
+    if (!answerRaw) stats.noAnswer++;
+
+    const isOpen = options.length < 2;
     const ptsParsed = parseFloat(get(col.points));
     raw.push({
       question,
       options: isOpen ? [] : options,
-      answerRaw: answerRaw || (isOpen ? options[0] : ""), // fallback: lone option = answer
+      answerRaw,
       round: get(col.round).trim(),
+      qtype: qtype || undefined,
       points: Number.isFinite(ptsParsed) && ptsParsed > 0 ? ptsParsed : null,
       seconds: parseSeconds(get(col.seconds)), // blank → null → round default
-      explanation: get(col.explanation).trim(),
+      explanation,
       image,
     });
   }
 
-  return buildQuizData(raw, skipped, sourceLabel);
+  const warnings: string[] = [];
+  if (stats.recoveredQuestion > 0) {
+    warnings.push(
+      `${stats.recoveredQuestion} row${stats.recoveredQuestion > 1 ? "s" : ""} had an empty Question cell — the question text was recovered from the rest of the row so nothing was lost.`
+    );
+  }
+  if (stats.noAnswer > 0) {
+    warnings.push(
+      `${stats.noAnswer} row${stats.noAnswer > 1 ? "s" : ""} had no Answer — kept as is; the host can read the question and award points manually.`
+    );
+  }
+  if (stats.blank > 0) {
+    warnings.push(`${stats.blank} completely empty row${stats.blank > 1 ? "s" : ""} ignored.`);
+  }
+
+  return buildQuizData(raw, stats.blank, sourceLabel, warnings);
 }
 
 function splitOptions(raw: string): string[] {
   if (!raw.trim()) return [];
-  const parts = raw
+  // Split on the delimiter only — the text itself is kept EXACTLY as written,
+  // so symbols, punctuation and prefixes like "e.g." or "C.S." are untouched.
+  return raw
     .split(/[|;•]|\n/)
-    .map((s) => s.replace(/^[A-Fa-f][).:;]\s*/, "").trim())
+    .map((s) => s.trim())
     .filter(Boolean);
-  return parts;
 }
 
 /** Recompute totalPoints / estimatedSeconds after round defs are tuned. */
@@ -404,7 +593,12 @@ export function recomputeTotals(data: QuizData): QuizData {
   return { ...data, totalPoints, estimatedSeconds };
 }
 
-export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: string): QuizData {
+export function buildQuizData(
+  raw: RawRow[],
+  skipped: number,
+  sourceLabel: string,
+  warnings: string[] = []
+): QuizData {
   if (raw.length === 0) {
     throw new SheetFetchError(
       "Found a header row but no usable questions. Rows need a Question + Answer (for open questions) or Question + 2+ options + Answer (for multiple choice)."
@@ -416,40 +610,43 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
   if (truncatedRows > 0) raw = raw.slice(0, MAX_QUESTIONS);
 
   const questions: Question[] = [];
-  let droppedBadAnswers = 0;
+  const notes = [...warnings];
+  let unmatchedAnswers = 0;
 
   raw.forEach((r, i) => {
-    const isMcq = r.options.length >= 2;
-    let answerIndex = -1;
-    let answerText: string | undefined;
-    if (isMcq) {
-      answerIndex = r.answerRaw ? resolveAnswerIndex(r.answerRaw, r.options) : -1;
-      if (answerIndex === -1) {
-        // unresolvable or blank answer → default to option A, count as skipped-detail
-        if (r.answerRaw) droppedBadAnswers++;
-        answerIndex = 0;
-      }
-    } else {
-      answerText = r.answerRaw.trim();
-      if (!answerText) {
-        droppedBadAnswers++;
-        answerText = "—"; // marker so the row doesn't disappear
-      }
-    }
+    const hasOptions = r.options.length >= 2;
+    // The cleaned copy is used ONLY to locate the matching option.
+    const resolved = hasOptions && r.answerRaw ? resolveAnswerIndex(cleanAnswerCell(r.answerRaw), r.options) : -1;
+    // Options are ALWAYS kept — a question is a selection whenever it has them.
+    // If the answer matches no option we don't guess: the options still show
+    // and the answer is displayed exactly as written.
+    const isMcq = hasOptions;
+    const unresolved = hasOptions && resolved < 0;
+    if (unresolved) unmatchedAnswers++;
+
     questions.push({
       id: `q-${i}-${questions.length}`,
       text: r.question,
       kind: isMcq ? "mcq" : "open",
-      options: r.options,
-      answerIndex,
-      answerText,
+      options: isMcq ? r.options : [],
+      answerIndex: isMcq ? resolved : -1,
+      answerText: r.answerRaw || undefined,
+      answerRaw: r.answerRaw || undefined,
+      answerUnresolved: unresolved ? true : undefined,
       round: r.round,
+      qtype: r.qtype,
       points: r.points ?? 0, // 0 => use round default
       seconds: r.seconds ?? 0, // 0 => use round default
       explanation: r.explanation || undefined,
       image: r.image,
     });
   });
+
+  if (unmatchedAnswers > 0) {
+    notes.push(
+      `${unmatchedAnswers} multiple-choice answer${unmatchedAnswers > 1 ? "s" : ""} didn’t match any option, so the answer is shown exactly as written rather than guessed.`
+    );
+  }
 
   const rounds = buildRounds(questions);
   const totalPoints = rounds.reduce(
@@ -463,13 +660,22 @@ export function buildQuizData(raw: RawRow[], skipped: number, sourceLabel: strin
     0
   );
 
+  if (truncatedRows > 0) {
+    notes.push(
+      `The sheet has more than ${MAX_QUESTIONS} questions — the first ${MAX_QUESTIONS} are used and the last ${truncatedRows} were left out.`
+    );
+  }
+
   return {
     rounds,
     totalQuestions: questions.length,
     totalPoints,
     estimatedSeconds,
-    skippedRows: skipped + droppedBadAnswers,
+    // only genuinely empty rows count as skipped — nothing with content is dropped
+    skippedRows: skipped,
+    rowsRead: raw.length + skipped,
     truncatedRows,
+    warnings: notes,
     sourceLabel,
   };
 }

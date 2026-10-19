@@ -4,7 +4,6 @@ import {
   Minus, Plus, SlidersHorizontal, Timer as TimerIcon, Zap, Check, AlertTriangle,
 } from "lucide-react";
 import { QuizData, QuizMode } from "../lib/types";
-import { MAX_QUESTIONS } from "../lib/sheets";
 import { cn } from "../utils/cn";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -89,23 +88,34 @@ export default function BriefingScreen({
         <span className="truncate">
           {via === "demo" ? "Built-in demo set" : sourceUrl?.replace(/^https?:\/\//, "")}
         </span>
-        {data.skippedRows > 0 && (
-          <span className="text-amber">· {data.skippedRows} row{data.skippedRows > 1 ? "s" : ""} skipped</span>
-        )}
+        <span className="text-lime">
+          · {data.totalQuestions} of {data.rowsRead} rows loaded
+        </span>
       </motion.div>
 
-      {data.truncatedRows > 0 && (
+      {data.warnings.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6, ease }}
-          className="mt-4 flex max-w-xl items-start gap-2.5 rounded-xl border border-amber/40 bg-amber/10 px-4 py-3 text-left"
+          className="glass mt-5 w-full max-w-2xl rounded-2xl px-5 py-4 text-left"
         >
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber" />
-          <p className="text-[12px] leading-relaxed text-paper">
-            This sheet has more than the <span className="font-bold text-amber">{MAX_QUESTIONS}-question limit</span> —
-            using the first {MAX_QUESTIONS} and ignoring the last {data.truncatedRows}. Split the extras
-            into another sheet to run them as a separate quiz.
+          <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] text-amber">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            HOW THIS SHEET WAS READ
+          </p>
+          <ul className="mt-3 space-y-2">
+            {data.warnings.map((w, i) => (
+              <li key={i} className="flex gap-2.5 text-[12px] leading-relaxed text-paper/85">
+                <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-amber" />
+                {w}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 border-t border-line pt-3 font-mono text-[10px] leading-relaxed text-fog">
+            {data.truncatedRows > 0
+              ? `Split the extra rows into a second sheet to run them separately.`
+              : `Every row with content is loaded — nothing is silently dropped.`}
           </p>
         </motion.div>
       )}

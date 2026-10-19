@@ -19,12 +19,13 @@ interface Props {
 }
 
 const RECENT_KEY = "quizbee.recents";
-const SAMPLE_CSV = `Question,A,B,C,D,Answer,Round,Time,Image,Explanation
-Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Mercury,B,Easy,,,Iron oxide dust covers its surface.
-What is 12 x 8?,88,96,104,112,96,Average,,,12 x 8 = 96.
-Solve: a train travels 80 km/h for 3.75 hours. Distance?,260 km,280 km,300 km,320 km,C,Difficult,90,,Needs working time - 90s from the Time column.
-What landmark is in the image?,Eiffel Tower,Big Ben,Statue of Liberty,Sydney Opera House,A,Average,,https://images.pexels.com/photos/29667766/pexels-photo-29667766.jpeg,Eiffel Tower in Paris.
-What animal is in the image?,,,,,Philippine Tarsier,Difficult,1:30,https://images.pexels.com/photos/4086737/pexels-photo-4086737.jpeg,One of the world's smallest primates.`;
+const SAMPLE_CSV = `Question,Type of Question,A,B,C,D,Answer,Round,Time,Image,Explanation
+Which planet is known as the Red Planet?,Multiple Choice,Venus,Mars,Jupiter,Mercury,B,Easy,,,Iron oxide dust covers its surface.
+The sun is a star.,True or False,,,,,True,Easy,,,It is a G-type main-sequence star.
+The capital of Japan is ______.,Fill in the Blanks,,,,,Tokyo,Easy,,,Tokyo has been the capital since 1868.
+Who wrote Noli Me Tangere?,Identification,,,,,Jose Rizal,Average,,,Published in Berlin in 1887.
+A train travels 80 km/h for 3.75 hours. Distance?,Problem Solving,260 km,280 km,300 km,320 km,C,Difficult,90,,80 x 3.75 = 300 km.
+What landmark is in the image?,Picture Round,Eiffel Tower,Big Ben,Statue of Liberty,Sydney Opera House,A,Average,,https://images.pexels.com/photos/29667766/pexels-photo-29667766.jpeg,Eiffel Tower in Paris.`;
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -294,7 +295,7 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                         </span>
                       )}
                       <span className="max-w-52 truncate">
-                        {isSample ? "Quiz Bee Mock Demo" : `${r.replace(/^https?:\/\//, "").slice(0, 42)}…`}
+                        {isSample ? "Quiz Bee demo sheet" : `${r.replace(/^https?:\/\//, "").slice(0, 42)}…`}
                       </span>
                       <ArrowRight className="h-3 w-3 text-lime opacity-0 transition group-hover:opacity-100" />
                     </button>
@@ -372,23 +373,46 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                   <div>
                     {/* mini table preview */}
                     <div className="overflow-x-auto rounded-xl border border-line">
-                      <table className="w-full min-w-[560px] text-left font-mono text-[11px]">
+                      <table className="w-full min-w-[980px] text-left font-mono text-[11px]">
                         <thead>
                           <tr className="hl-strong text-fog">
-                            {["Question", "A", "B", "C", "D", "Answer", "Round"].map((h) => (
+                            {["Question", "Type of Question", "A", "B", "C", "D", "Answer", "Round", "Time", "Image", "Explanation"].map((h) => (
                               <th key={h} className="border-b border-line px-3 py-2.5 font-medium tracking-wider">{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody className="text-fog/90">
                           <tr className="border-b border-line/50">
-                            <td className="px-3 py-2.5 text-paper">Red planet?</td><td className="px-3 py-2.5">Venus</td><td className="px-3 py-2.5 text-lime">Mars</td><td className="px-3 py-2.5">Jupiter</td><td className="px-3 py-2.5">Mercury</td><td className="px-3 py-2.5 font-bold text-lime">B</td><td className="px-3 py-2.5"><span className="rounded bg-lime/10 px-1.5 py-0.5 text-lime">Easy</span></td>
+                            <td className="px-3 py-2.5 text-paper">Red planet?</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-sky/10 px-1.5 py-0.5 text-sky">Multiple Choice</span></td>
+                            <td className="px-3 py-2.5">Venus</td><td className="px-3 py-2.5 text-lime">Mars</td><td className="px-3 py-2.5">Jupiter</td><td className="px-3 py-2.5">Mercury</td>
+                            <td className="px-3 py-2.5 font-bold text-lime">B</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-lime/10 px-1.5 py-0.5 text-lime">Easy</span></td>
+                            <td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td>
                           </tr>
                           <tr className="border-b border-line/50">
-                            <td className="px-3 py-2.5 text-paper">12 × 8?</td><td className="px-3 py-2.5">88</td><td className="px-3 py-2.5 text-lime">96</td><td className="px-3 py-2.5">104</td><td className="px-3 py-2.5">112</td><td className="px-3 py-2.5 font-bold text-lime">96</td><td className="px-3 py-2.5"><span className="rounded bg-sky/10 px-1.5 py-0.5 text-sky">Average</span></td>
+                            <td className="px-3 py-2.5 text-paper">The sun is a star.</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-amber/10 px-1.5 py-0.5 text-amber">True or False</span></td>
+                            <td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td>
+                            <td className="px-3 py-2.5 font-bold text-lime">True</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-lime/10 px-1.5 py-0.5 text-lime">Easy</span></td>
+                            <td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td>
+                          </tr>
+                          <tr className="border-b border-line/50">
+                            <td className="px-3 py-2.5 text-paper">Capital of Japan is ___.</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-violet/10 px-1.5 py-0.5 text-violet">Fill in the Blanks</span></td>
+                            <td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td>
+                            <td className="px-3 py-2.5 font-bold text-lime">Tokyo</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-lime/10 px-1.5 py-0.5 text-lime">Easy</span></td>
+                            <td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td>
                           </tr>
                           <tr>
-                            <td className="px-3 py-2.5 text-paper">Mona Lisa by…?</td><td className="px-3 py-2.5">Michelangelo</td><td className="px-3 py-2.5">Raphael</td><td className="px-3 py-2.5 text-lime">Da Vinci</td><td className="px-3 py-2.5">Donatello</td><td className="px-3 py-2.5 font-bold text-lime">C</td><td className="px-3 py-2.5"><span className="rounded bg-amber/10 px-1.5 py-0.5 text-amber">Difficult</span></td>
+                            <td className="px-3 py-2.5 text-paper">Train 80 km/h for 3.75 h?</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-lime/10 px-1.5 py-0.5 text-lime">Problem Solving</span></td>
+                            <td className="px-3 py-2.5">260 km</td><td className="px-3 py-2.5">280 km</td><td className="px-3 py-2.5 text-lime">300 km</td><td className="px-3 py-2.5">320 km</td>
+                            <td className="px-3 py-2.5 font-bold text-lime">C</td>
+                            <td className="px-3 py-2.5"><span className="rounded bg-amber/10 px-1.5 py-0.5 text-amber">Difficult</span></td>
+                            <td className="px-3 py-2.5 text-sky">90</td><td className="px-3 py-2.5">—</td><td className="px-3 py-2.5">—</td>
                           </tr>
                         </tbody>
                       </table>
@@ -413,6 +437,7 @@ export default function SetupScreen({ onReady, onCustomize, titleA, titleB, marq
                       ["Options as columns A–F (or a single Options column split with | ). Leave options empty for open verbal questions — the Answer is simply revealed.", true],
                       ["Answer accepts a letter (B), a number (2), the exact option text — or any free text for open questions.", true],
                       ["Round groups questions: Easy 1pt · Average 2pts · Difficult 3pts · Clincher 5pts. Blank round = one general round.", true],
+                      ["Optional Type of Question column (Type / Question Type / Format) shows a coloured badge on screen — Identification, Fill in the Blanks, True or False, Multiple Choice, Enumeration and more. A True or False type auto-builds the two choices.", true],
                       ["Optional Points column overrides scoring per question.", true],
                       ["Optional Time column (Time / Timer / Seconds / Duration) sets a custom countdown for questions that need more working time — accepts 90, 90s, or 1:30. Blank = the round's timer set in the app.", true],
                       ["Optional Image column (Image / Picture / Photo) — paste a direct image URL or Google Drive share link for guess-the-image rounds. Works with MCQ and open questions.", true],

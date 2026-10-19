@@ -10,6 +10,7 @@ import { sfx, setMuted, isMuted } from "../../lib/sound";
 import RankBadge from "../RankBadge";
 import AutoFitText from "../AutoFitText";
 import QuestionImage from "../QuestionImage";
+import QuestionTypeBadge from "../QuestionTypeBadge";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -342,6 +343,11 @@ export default function HostGame({
                 {isOpen && <span className="ml-2 text-violet">· OPEN ANSWER</span>}
                 {question.image && <span className="ml-2 text-sky">· 🖼 IMAGE</span>}
               </span>
+              {question.qtype && (
+                <span className="mt-5">
+                  <QuestionTypeBadge type={question.qtype} size="md" />
+                </span>
+              )}
               <span className="mt-8 grid h-20 w-20 place-items-center rounded-2xl border border-line bg-ink text-fog transition group-hover:border-lime/50 group-hover:text-lime group-hover:shadow-[0_0_40px_rgba(184,255,60,0.25)] md:h-24 md:w-24">
                 <Eye className="h-9 w-9 md:h-11 md:w-11" />
               </span>
@@ -389,25 +395,45 @@ export default function HostGame({
                 </div>
               </div>
 
+              {/* question-type badge from the sheet */}
+              {question.qtype && (
+                <motion.div
+                  key={`qtype-${qIndex}`}
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.4, ease }}
+                  className="mt-5 md:mt-6"
+                >
+                  <QuestionTypeBadge type={question.qtype} size="lg" />
+                </motion.div>
+              )}
+
               {/* the question — auto-sized to fill the available stage area */}
               <AutoFitText
                 key={`q-text-${qIndex}-${qState}`}
                 text={question.text}
-                min={22}
+                min={question.text.length > 260 ? 18 : 22}
                 max={160}
                 lineHeight={1.06}
                 className="mt-4 flex w-full max-w-[92rem] items-center justify-center md:mt-6"
                 style={{
+                  // long statements / paragraphs get a taller box so they stay readable
                   height:
                     qState === "revealed"
                       ? question.image
                         ? "clamp(3rem, 8vh, 5.5rem)"
-                        : "clamp(4rem, 11vh, 7.5rem)" // shrink to make room for the answer
+                        : question.text.length > 140
+                          ? "clamp(5rem, 15vh, 10rem)"
+                          : "clamp(4rem, 11vh, 7.5rem)"
                       : question.image
                         ? "clamp(4rem, 12vh, 8rem)" // image takes the spotlight
-                        : isOpen
-                          ? "clamp(9rem, 32vh, 24rem)"
-                          : "clamp(8rem, 27vh, 19rem)",
+                        : question.text.length > 260
+                          ? "clamp(10rem, 38vh, 30rem)"
+                          : question.text.length > 140
+                            ? "clamp(9rem, 34vh, 26rem)"
+                            : isOpen
+                              ? "clamp(9rem, 32vh, 24rem)"
+                              : "clamp(8rem, 27vh, 19rem)",
                   transition: "height 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
                 }}
                 textClassName={cn(
@@ -435,9 +461,11 @@ export default function HostGame({
                 >
                   <AnimatePresence mode="popLayout">
                     {question.options.map((opt, i) => {
-                      const isCorrect = i === question.answerIndex;
                       const revealed = qState === "revealed";
-                      if (revealed && !isCorrect) return null;
+                      // Unresolved answer → no option is marked, but ALL stay visible
+                      const unresolved = question.answerIndex < 0;
+                      const isCorrect = !unresolved && i === question.answerIndex;
+                      if (revealed && !isCorrect && !unresolved) return null;
                       return (
                         <motion.div
                           key={i}
@@ -553,28 +581,57 @@ export default function HostGame({
                   transition={{ duration: 0.45, ease }}
                   className="mt-8 flex w-full max-w-6xl flex-1 flex-col items-center justify-center md:mt-10"
                 >
-                  {isOpen && (
+                  {(isOpen || question.answerUnresolved) && (
                     <div
                       className="glass-col !border-lime/40 w-full max-w-4xl rounded-3xl px-6 py-7 md:py-9"
                       style={{ fontFamily: "var(--font-sans)" }}
                     >
-                      <p className="font-mono text-[11px] tracking-[0.4em] text-fog md:text-[12px]">THE ANSWER IS</p>
-                      <AutoFitText
-                        text={question.answerText ?? ""}
-                        min={24}
-                        max={120}
-                        lineHeight={1.04}
-                        className="mt-4 flex w-full items-center justify-center"
-                        style={{ height: "clamp(4.5rem, 16vh, 9rem)" }}
-                        textClassName="type-qa text-center text-lime"
-                      />
+                      <p className="font-mono text-[11px] tracking-[0.4em] text-fog md:text-[12px]">
+                        {question.answerText ? "THE ANSWER IS" : "NO ANSWER IN THE SHEET"}
+                      </p>
+                      {question.answerText ? (
+                        <AutoFitText
+                          text={question.answerText}
+                          min={24}
+                          max={120}
+                          lineHeight={1.04}
+                          className="mt-4 flex w-full items-center justify-center"
+                          style={{ height: "clamp(4.5rem, 16vh, 9rem)" }}
+                          textClassName="type-qa text-center text-lime"
+                        />
+                      ) : (
+                        <p className="mt-4 text-center font-mono text-[13px] tracking-[0.2em] text-fog">
+                          HOST DECIDES · AWARD POINTS BELOW
+                        </p>
+                      )}
+                      {question.answerUnresolved && (
+                        <p className="mt-4 text-center font-mono text-[10px] leading-relaxed tracking-[0.15em] text-amber">
+                          SHOWN EXACTLY AS WRITTEN — DIDN’T MATCH AN OPTION
+                        </p>
+                      )}
                     </div>
                   )}
                   {question.explanation && (
-                    <p className="mt-5 flex items-start justify-center gap-2 text-sm leading-relaxed text-fog md:text-base">
-                      <Lightbulb className="mt-1 h-4 w-4 shrink-0 text-amber" />
-                      {question.explanation}
-                    </p>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.15, ease }}
+                      className="glass mt-5 w-full max-w-4xl rounded-2xl px-5 py-4 text-left md:px-6 md:py-5"
+                    >
+                      <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] text-amber">
+                        <Lightbulb className="h-3.5 w-3.5" />
+                        EXPLANATION
+                      </p>
+                      <p
+                        className="mt-2 max-h-[22vh] overflow-y-auto leading-relaxed text-paper/90"
+                        style={{
+                          fontSize: "clamp(0.95rem, 1.5vw, 1.25rem)",
+                          whiteSpace: "pre-line",
+                        }}
+                      >
+                        {question.explanation}
+                      </p>
+                    </motion.div>
                   )}
 
                   {/* award controls */}

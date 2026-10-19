@@ -12,6 +12,8 @@ interface Props {
   textClassName?: string;
   style?: React.CSSProperties;
   lineHeight?: number;
+  /** optional rich rendering of `text` (measurement still uses the real DOM) */
+  children?: React.ReactNode;
 }
 
 /**
@@ -26,6 +28,7 @@ export default function AutoFitText({
   textClassName,
   style,
   lineHeight = 1.08,
+  children,
 }: Props) {
   const boxRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
@@ -82,10 +85,14 @@ export default function AutoFitText({
           display: "block",
           width: "100%",
           lineHeight,
-          overflowWrap: "break-word",
+          // keep the writer's line breaks — paragraphs stay paragraphs
+          whiteSpace: "pre-line",
+          // break very long unbreakable runs (e.g. "____________________")
+          overflowWrap: "anywhere",
+          wordBreak: "break-word",
         }}
       >
-        {text}
+        {children ?? text}
       </span>
     </div>
   );

@@ -9,6 +9,7 @@ import { QuizRound, AnswerRecord } from "../lib/types";
 import { sfx, setMuted, isMuted } from "../lib/sound";
 import AutoFitText from "./AutoFitText";
 import QuestionImage from "./QuestionImage";
+import QuestionTypeBadge from "./QuestionTypeBadge";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const REVEAL_MS = 3600;
@@ -94,6 +95,17 @@ export default function QuizScreen({
       lockedRef.current = true;
       const elapsed = (Date.now() - startRef.current) / 1000;
       const left = Math.max(0, secondsFor - elapsed);
+
+      // Answer couldn't be matched to an option — show it and let the player
+      // judge their own pick rather than auto-failing them.
+      if (question.answerUnresolved && idx !== null) {
+        sfx.select();
+        setSelected(idx);
+        setTimedOut(to);
+        setPhase("check");
+        return;
+      }
+
       const correct = idx !== null && idx === question.answerIndex;
       if (correct) sfx.correct();
       else if (!to) sfx.wrong(); // time-up already plays its own buzzer — don't stack sounds
@@ -133,14 +145,14 @@ export default function QuizScreen({
       setPhase("revealed");
       onQuestionResult({
         question,
-        selectedIndex: null,
+        selectedIndex: selected,
         correct,
         timedOut,
         pointsEarned: correct ? pointsFor : 0,
         timeLeft: Math.round(left * 10) / 10,
       });
     },
-    [question, pointsFor, secondsFor, onQuestionResult, timedOut]
+    [question, pointsFor, secondsFor, onQuestionResult, timedOut, selected]
   );
 
   /* ---------- advance ---------- */
@@ -297,14 +309,27 @@ export default function QuizScreen({
                   {isOpen && <span className="ml-2 rounded hl-soft px-1.5 py-0.5 text-violet">OPEN</span>}
                   {question.image && <span className="ml-2 rounded bg-sky/10 px-1.5 py-0.5 text-sky">🖼 IMAGE</span>}
                 </p>
+                {question.qtype && (
+                  <div className="mt-3">
+                    <QuestionTypeBadge type={question.qtype} size="md" />
+                  </div>
+                )}
                 <AutoFitText
                   key={`q-text-${index}`}
                   text={question.text}
-                  min={30}
+                  min={question.text.length > 200 ? 20 : 30}
                   max={question.image ? 96 : 150}
                   lineHeight={1.06}
                   className="mt-3 flex w-full items-center"
-                  style={{ height: question.image ? "clamp(4rem, 14vh, 8rem)" : "clamp(7rem, 32vh, 19rem)" }}
+                  style={{
+                    height: question.image
+                      ? "clamp(4rem, 14vh, 8rem)"
+                      : question.text.length > 260
+                        ? "clamp(8rem, 34vh, 24rem)"
+                        : question.text.length > 140
+                          ? "clamp(7rem, 30vh, 21rem)"
+                          : "clamp(7rem, 32vh, 19rem)",
+                  }}
                   textClassName="type-qa q-text"
                 />
               </div>
@@ -458,16 +483,29 @@ export default function QuizScreen({
                 transition={{ duration: 0.45, ease }}
                 className="glass-col !border-lime/40 mt-8 rounded-3xl p-6 text-center md:p-8"
               >
-                <p className="font-mono text-[10px] tracking-[0.4em] text-fog">THE ANSWER IS</p>
-                <AutoFitText
-                  text={question.answerText ?? ""}
-                  min={28}
-                  max={120}
-                  lineHeight={1.06}
-                  className="mt-3 flex w-full items-center justify-center"
-                  style={{ height: "clamp(5rem, 20vh, 12rem)" }}
-                  textClassName="type-qa text-center text-lime"
-                />
+                <p className="font-mono text-[10px] tracking-[0.4em] text-fog">
+                  {question.answerText ? "THE ANSWER IS" : "NO ANSWER IN THE SHEET"}
+                </p>
+                {question.answerText ? (
+                  <AutoFitText
+                    text={question.answerText || question.answerRaw || ""}
+                    min={28}
+                    max={120}
+                    lineHeight={1.06}
+                    className="mt-3 flex w-full items-center justify-center"
+                    style={{ height: "clamp(5rem, 20vh, 12rem)" }}
+                    textClassName="type-qa text-center text-lime"
+                  />
+                ) : (
+                  <p className="mt-4 font-mono text-[12px] tracking-[0.2em] text-fog">
+                    MARK IT YOURSELF BELOW
+                  </p>
+                )}
+                {question.answerUnresolved && (
+                  <p className="mt-3 font-mono text-[10px] tracking-[0.15em] text-amber">
+                    SHOWN EXACTLY AS WRITTEN — DIDN’T MATCH AN OPTION
+                  </p>
+                )}
                 <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <button
                     onClick={() => verdict(true)}
@@ -496,8 +534,9 @@ export default function QuizScreen({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4, ease }}
-                  className="glass-strong mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl px-5 py-4 sm:flex-row sm:items-center"
+                  className="glass-strong mt-6 rounded-2xl px-5 py-4"
                 >
+                  <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                   <div className="flex items-start gap-3">
                     {isOpen ? (
                       <span className={cn(
@@ -515,12 +554,6 @@ export default function QuizScreen({
                     ) : (
                       <span className="rounded-md bg-rose/15 px-2.5 py-1 font-mono text-[12px] font-bold tracking-widest text-rose">WRONG</span>
                     )}
-                    {question.explanation && (
-                      <p className="flex items-start gap-2 text-[15px] leading-relaxed text-fog">
-                        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber" />
-                        {question.explanation}
-                      </p>
-                    )}
                   </div>
                   <button
                     onClick={advance}
@@ -529,6 +562,22 @@ export default function QuizScreen({
                     NEXT
                     <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </button>
+                  </div>
+
+                  {question.explanation && (
+                    <div className="mt-4 border-t border-line pt-4">
+                      <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] text-amber">
+                        <Lightbulb className="h-3.5 w-3.5" />
+                        EXPLANATION
+                      </p>
+                      <p
+                        className="mt-2 max-h-40 overflow-y-auto text-[15px] leading-relaxed text-paper/90"
+                        style={{ whiteSpace: "pre-line" }}
+                      >
+                        {question.explanation}
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

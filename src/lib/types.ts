@@ -8,7 +8,16 @@ export interface Question {
   answerIndex: number;
   /** open questions: the expected answer text */
   answerText?: string;
+  /** the answer cell exactly as written in the sheet — shown verbatim */
+  answerRaw?: string;
+  /**
+   * True when this is an MCQ whose answer cell didn't match any option.
+   * The raw answer is then displayed instead of guessing an option.
+   */
+  answerUnresolved?: boolean;
   round: string;
+  /** raw "Type of Question" label from the sheet (e.g. "Identification") */
+  qtype?: string;
   points: number;
   /** per-question time limit in seconds; 0 => use the round default */
   seconds: number;
@@ -38,6 +47,10 @@ export interface QuizData {
   totalPoints: number;
   estimatedSeconds: number;
   skippedRows: number;
+  /** total non-blank data rows found below the header */
+  rowsRead: number;
+  /** human-readable notes explaining any unusual row, in plain language */
+  warnings: string[];
   /** rows dropped because the 300-question cap was reached */
   truncatedRows: number;
   sourceLabel: string;
